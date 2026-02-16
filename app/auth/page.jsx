@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [mode, setMode] = useState('login')
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
@@ -18,7 +18,7 @@ export default function AuthPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
 
@@ -61,7 +61,7 @@ export default function AuthPage() {
         if (error) throw error
         router.push('/dashboard')
       }
-    } catch (error: any) {
+    } catch (error) {
       alert(error.message)
     } finally {
       setLoading(false)
@@ -87,7 +87,7 @@ export default function AuthPage() {
           {['login', 'register'].map(m => (
             <button
               key={m}
-              onClick={() => setMode(m as 'login' | 'register')}
+              onClick={() => setMode(m)}
               className={`
                 flex-1 py-2 px-4 rounded text-sm font-medium transition-all
                 ${mode === m
