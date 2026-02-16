@@ -8,14 +8,9 @@ const groq = new Groq({
 })
 
 export async function analyzeBeliefs(
-  answers: Record<string, string>,
-  politicalLean: string
-): Promise<{
-  worldview: string
-  coreValues: string[]
-  commonGround: string[]
-  underlyingConcerns: string[]
-}> {
+  answers,
+  politicalLean
+) {
   const summary = Object.entries(answers)
     .map(([topic, answer]) => `${topic}: "${answer}"`)
     .join('\n')
@@ -34,7 +29,7 @@ Responses:
 ${summary}`
 
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.1-70b-versatile', // Free Llama 3.1 70B model!
+    model: 'llama-3.3-70b-versatile', // Current free model
     messages: [
       {
         role: 'system',
@@ -56,10 +51,10 @@ ${summary}`
 }
 
 export async function facilitateDialogue(
-  topic: string,
-  messages: Array<{ user_name: string; user_lean: string; content: string }>,
-  participants: Array<{ name: string; lean: string; values?: string[] }>
-): Promise<string> {
+  topic,
+  messages,
+  participants
+) {
   const history = messages.slice(-6).map(m => 
     `${m.user_name} (${m.user_lean}): ${m.content}`
   ).join('\n')
@@ -85,7 +80,7 @@ Use deliberative democracy techniques:
 Respond in ~100 words. Acknowledge perspectives genuinely, introduce contrasting views respectfully, find shared values, and ask a deepening question.`
 
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.1-70b-versatile',
+    model: 'llama-3.3-70b-versatile',
     messages: [
       {
         role: 'system',
@@ -104,20 +99,10 @@ Respond in ~100 words. Acknowledge perspectives genuinely, introduce contrasting
 }
 
 export async function synthesizeConsensus(
-  topic: string,
-  messages: Array<{ user_name: string; content: string }>,
-  participants: Array<{ name: string; lean: string; values?: string[] }>
-): Promise<{
-  policyRecommendation: string
-  keyAgreements: string[]
-  participantContributions: Array<{
-    name: string
-    contribution: string
-    concernsAddressed: string
-  }>
-  implementationSteps: string[]
-  areasForFutureDialogue: string[]
-}> {
+  topic,
+  messages,
+  participants
+) {
   const dialogue = messages.map(m => 
     `${m.user_name}: ${m.content}`
   ).join('\n')
@@ -152,7 +137,7 @@ Provide JSON with:
 This should be an authentic synthesis, NOT a watered-down compromise.`
 
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.1-70b-versatile',
+    model: 'llama-3.3-70b-versatile',
     messages: [
       {
         role: 'system',
