@@ -180,8 +180,8 @@
 
 // Choose your AI provider (uncomment one):
 // import { analyzeBeliefs as analyzeBeliefsFn, facilitateDialogue as facilitateDialogueFn, synthesizeConsensus as synthesizeConsensusFn } from '@/lib/ai/anthropic'
-import { analyzeBeliefs as analyzeBeliefsFn, facilitateDialogue as facilitateDialogueFn, synthesizeConsensus as synthesizeConsensusFn } from '@/lib/ai/groq'
-// import { analyzeBeliefs as analyzeBeliefsFn, facilitateDialogue as facilitateDialogueFn, synthesizeConsensus as synthesizeConsensusFn } from '@/lib/ai/free-template'
+// import { analyzeBeliefs as analyzeBeliefsFn, facilitateDialogue as facilitateDialogueFn, synthesizeConsensus as synthesizeConsensusFn } from '@/lib/ai/groq'
+import { analyzeBeliefs as analyzeBeliefsFn, facilitateDialogue as facilitateDialogueFn, synthesizeConsensus as synthesizeConsensusFn } from '@/lib/ai/free-template'
 
 import { createClient } from '@/lib/supabase/server'
 

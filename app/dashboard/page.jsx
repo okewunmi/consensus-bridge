@@ -222,13 +222,22 @@ export default function Dashboard() {
     if (!loading && !user) {
       router.push('/auth')
     }
+    console.log('useUser state:', { user, profile, loading })
   }, [user, loading, router])
 
   useEffect(() => {
     if (user) {
       loadStats()
+      console.log('useUser state:', { user, profile, loading })
     }
   }, [user])
+
+useEffect(() => {
+  const timeout = setTimeout(() => {
+    if (loading) router.push('/auth') // or show an error
+  }, 5000)
+  return () => clearTimeout(timeout)
+}, [loading])
 
   const loadStats = async () => {
     const { data: dialogues } = await supabase
