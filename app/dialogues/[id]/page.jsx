@@ -10,18 +10,19 @@ import { Tag } from '@/components/ui/Tag'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 
+const supabase = createClient()
+
 export default function DialogueRoomPage() {
   const params = useParams()
-  const dialogueId = params.id as string
+  const dialogueId = params.id
   const { user, profile, loading: userLoading } = useUser()
   const { messages, loading: messagesLoading } = useRealtimeMessages(dialogueId)
-  const [dialogue, setDialogue] = useState<any>(null)
+  const [dialogue, setDialogue] = useState(null)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [generating, setGenerating] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef(null)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -30,37 +31,38 @@ export default function DialogueRoomPage() {
   }, [user, userLoading, router])
 
   useEffect(() => {
-    if (user) {
-      loadDialogue()
+    if (!user) return
+
+    const loadDialogue = async () => {
+      const { data } = await supabase
+        .from('dialogues')
+        .select(`
+          *,
+          dialogue_participants (
+            user_id,
+            users (
+              id,
+              name,
+              political_lean,
+              belief_profile
+            )
+          )
+        `)
+        .eq('id', dialogueId)
+        .single()
+
+      if (data) {
+        setDialogue(data)
+      }
     }
+
+    loadDialogue()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  const loadDialogue = async () => {
-    const { data } = await supabase
-      .from('dialogues')
-      .select(`
-        *,
-        dialogue_participants (
-          user_id,
-          users (
-            id,
-            name,
-            political_lean,
-            belief_profile
-          )
-        )
-      `)
-      .eq('id', dialogueId)
-      .single()
-
-    if (data) {
-      setDialogue(data)
-    }
-  }
 
   const sendMessage = async () => {
     if (!input.trim() || sending || !user || !profile) return
@@ -69,14 +71,14 @@ export default function DialogueRoomPage() {
 
     const { error } = await supabase
       .from('messages')
-      .insert([{
+      .insert({
         dialogue_id: dialogueId,
         user_id: user.id,
         user_name: profile.name,
         user_lean: profile.political_lean,
         content: input,
         is_ai: false
-      }])
+      })
 
     if (error) {
       alert(error.message)
@@ -87,7 +89,7 @@ export default function DialogueRoomPage() {
     setSending(false)
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
@@ -130,7 +132,7 @@ export default function DialogueRoomPage() {
 
   if (!user || !profile || !dialogue) return null
 
-  const participants = dialogue.dialogue_participants?.map((p: any) => p.users) || []
+  const participants = dialogue.dialogue_participants?.map((p) => p.users) || []
 
   return (
     <div className="h-screen bg-slate-950 flex flex-col">
@@ -264,7 +266,7 @@ export default function DialogueRoomPage() {
               Participants
             </div>
             <div className="space-y-3">
-              {participants.map((p: any) => (
+              {participants.map((p) => (
                 <div key={p.id} className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold flex-shrink-0">
                     {p.name[0]}

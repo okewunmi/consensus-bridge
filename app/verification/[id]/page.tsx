@@ -29,6 +29,7 @@ export default function SynthesisVerificationPage() {
     if (user) {
       loadSynthesis()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const loadSynthesis = async () => {

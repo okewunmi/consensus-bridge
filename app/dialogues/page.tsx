@@ -34,6 +34,7 @@ export default function DialoguesPage() {
       loadDialogues()
       loadUsers()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const loadDialogues = async () => {
