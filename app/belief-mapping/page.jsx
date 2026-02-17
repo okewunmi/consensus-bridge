@@ -141,7 +141,7 @@ export default function BeliefMappingPage() {
               Your Civic Profile
             </h2>
             <p className="text-slate-400">
-              Based on your responses, here's how AI understands your worldview
+              Based on your responses, here&apos;s how AI understands your worldview
             </p>
           </div>
 
