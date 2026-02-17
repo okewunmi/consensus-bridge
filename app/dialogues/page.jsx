@@ -1,66 +1,132 @@
-// "use client"
+// 'use client'
 
 // import { useEffect, useState } from 'react'
 // import { useRouter } from 'next/navigation'
-// import Link from 'next/link'
 // import { createClient } from '@/lib/supabase/client'
 // import { useUser } from '@/lib/hooks/useUser'
 // import { Card } from '@/components/ui/Card'
 // import { Tag } from '@/components/ui/Tag'
+// import { Button } from '@/components/ui/Button'
 // import { Spinner } from '@/components/ui/Spinner'
 
-// // Create Supabase client OUTSIDE component (only once!)
-// const supabase = createClient()
-
-// export default function Dashboard() {
-//   const { user, profile, loading } = useUser()
-//   const [stats, setStats] = useState({ dialogues: 0, syntheses: 0, verifications: 0 })
+// export default function DialoguesPage() {
+//   const { user, profile, loading: userLoading } = useUser()
+//   const [dialogues, setDialogues] = useState<any[]>([])
+//   const [users, setUsers] = useState<any[]>([])
+//   const [loading, setLoading] = useState(true)
+//   const [showCreate, setShowCreate] = useState(false)
+//   const [newDialogue, setNewDialogue] = useState({
+//     topic: '',
+//     description: '',
+//     selectedUsers: [] as string[]
+//   })
 //   const router = useRouter()
+//   const supabase = createClient()
 
-//   // Redirect if not logged in
 //   useEffect(() => {
-//     if (!loading && !user) {
+//     if (!userLoading && !user) {
 //       router.push('/auth')
 //     }
-//   }, [user, loading, router])
+//   }, [user, userLoading, router])
 
-//   // Load stats when user is available
 //   useEffect(() => {
 //     if (user) {
-//       loadStats()
+//       loadDialogues()
+//       loadUsers()
 //     }
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, [user])
 
-//   const loadStats = async () => {
-//     const { data: dialogues } = await supabase
+//   const loadDialogues = async () => {
+//     const { data, error } = await supabase
+//       .from('dialogues')
+//       .select(`
+//         *,
+//         dialogue_participants (
+//           user_id,
+//           users (
+//             id,
+//             name,
+//             political_lean
+//           )
+//         ),
+//         messages (
+//           id
+//         )
+//       `)
+//       .order('created_at', { ascending: false })
+
+//     if (data) {
+//       setDialogues(data)
+//     }
+//     setLoading(false)
+//   }
+
+//   const loadUsers = async () => {
+//     const { data } = await supabase
+//       .from('users')
+//       .select('id, name, political_lean, belief_profile')
+//       .neq('id', user?.id)
+//       .not('belief_profile', 'is', null)
+
+//     if (data) {
+//       setUsers(data)
+//     }
+//   }
+
+//   const createDialogue = async () => {
+//     if (!newDialogue.topic || newDialogue.selectedUsers.length === 0) {
+//       alert('Please add a topic and select at least one participant')
+//       return
+//     }
+
+//     // Create dialogue
+//     const { data: dialogue, error: dialogueError } = await supabase
+//       .from('dialogues')
+//       .insert([{
+//         topic: newDialogue.topic,
+//         description: newDialogue.description,
+//         created_by: user?.id,
+//         status: 'active'
+//       }])
+//       .select()
+//       .single()
+
+//     if (dialogueError) {
+//       alert(dialogueError.message)
+//       return
+//     }
+
+//     // Add participants (including creator)
+//     const allParticipants = [user?.id, ...newDialogue.selectedUsers]
+//     const participants = allParticipants.map(userId => ({
+//       dialogue_id: dialogue.id,
+//       user_id: userId
+//     }))
+
+//     const { error: participantError } = await supabase
 //       .from('dialogue_participants')
-//       .select('dialogue_id')
-//       .eq('user_id', user?.id)
+//       .insert(participants)
 
-//     const { data: verifications } = await supabase
-//       .from('verifications')
-//       .select('id')
-//       .eq('user_id', user?.id)
+//     if (participantError) {
+//       alert(participantError.message)
+//       return
+//     }
 
-//     const { data: syntheses } = await supabase
-//       .from('syntheses')
-//       .select('id')
-//       .eq('approved', true)
-
-//     setStats({
-//       dialogues: dialogues?.length || 0,
-//       syntheses: syntheses?.length || 0,
-//       verifications: verifications?.length || 0
-//     })
+//     // Navigate to dialogue
+//     router.push(`/dialogues/${dialogue.id}`)
 //   }
 
-//   const handleLogout = async () => {
-//     await supabase.auth.signOut()
-//     router.push('/')
+//   const toggleUser = (userId: string) => {
+//     setNewDialogue(prev => ({
+//       ...prev,
+//       selectedUsers: prev.selectedUsers.includes(userId)
+//         ? prev.selectedUsers.filter(id => id !== userId)
+//         : [...prev.selectedUsers, userId]
+//     }))
 //   }
 
-//   if (loading) {
+//   if (userLoading || loading) {
 //     return (
 //       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
 //         <Spinner size={32} />
@@ -70,137 +136,157 @@
 
 //   if (!user || !profile) return null
 
+//   if (showCreate) {
+//     return (
+//       <div className="min-h-screen bg-slate-950">
+//         <nav className="border-b border-slate-800 p-4">
+//           <button
+//             onClick={() => setShowCreate(false)}
+//             className="text-sm text-slate-400 hover:text-slate-300"
+//           >
+//             ← Back to Dialogues
+//           </button>
+//         </nav>
+
+//         <div className="max-w-4xl mx-auto px-4 py-8 animate-fadeUp">
+//           <h2 className="font-display text-3xl font-bold mb-2">Create New Dialogue</h2>
+//           <p className="text-slate-400 mb-8">
+//             Choose a topic and invite participants with diverse perspectives
+//           </p>
+
+//           <Card className="mb-6">
+//             <label className="block text-sm font-medium text-slate-300 mb-2">
+//               Dialogue Topic
+//             </label>
+//             <input
+//               type="text"
+//               value={newDialogue.topic}
+//               onChange={(e) => setNewDialogue({ ...newDialogue, topic: e.target.value })}
+//               placeholder="e.g., Climate policy in our community"
+//               className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded text-slate-100 placeholder-slate-500 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none transition-colors mb-4"
+//             />
+
+//             <label className="block text-sm font-medium text-slate-300 mb-2">
+//               Description (optional)
+//             </label>
+//             <textarea
+//               value={newDialogue.description}
+//               onChange={(e) => setNewDialogue({ ...newDialogue, description: e.target.value })}
+//               placeholder="Brief description of what you'd like to discuss..."
+//               rows={3}
+//               className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded text-slate-100 placeholder-slate-500 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none transition-colors mb-4"
+//             />
+
+//             <label className="block text-sm font-medium text-slate-300 mb-3">
+//               Select Participants ({newDialogue.selectedUsers.length} selected)
+//             </label>
+//             <div className="grid md:grid-cols-2 gap-3">
+//               {users.map(u => {
+//                 const selected = newDialogue.selectedUsers.includes(u.id)
+//                 return (
+//                   <button
+//                     key={u.id}
+//                     onClick={() => toggleUser(u.id)}
+//                     className={`
+//                       p-3 rounded text-left transition-all text-sm
+//                       ${selected
+//                         ? 'bg-amber-400/10 border border-amber-400 text-amber-300'
+//                         : 'bg-slate-800 border border-slate-700 text-slate-300 hover:border-slate-600'
+//                       }
+//                     `}
+//                   >
+//                     <div className="font-semibold">{u.name}</div>
+//                     <div className="text-xs opacity-70">{u.political_lean}</div>
+//                   </button>
+//                 )
+//               })}
+//             </div>
+//           </Card>
+
+//           <Button onClick={createDialogue}>
+//             Create Dialogue →
+//           </Button>
+//         </div>
+//       </div>
+//     )
+//   }
+
 //   return (
 //     <div className="min-h-screen bg-slate-950">
-//       {/* Navigation */}
-//       <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-lg sticky top-0 z-50">
-//         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-//           <div className="flex items-center gap-3">
-//             <div className="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center text-slate-950 font-black text-lg">
-//               ⬡
-//             </div>
-//             <div>
-//               <h1 className="font-display font-bold text-lg">Consensus Bridge</h1>
-//               <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">
-//                 Democratic Dialogue Platform
-//               </p>
-//             </div>
-//           </div>
-//           <div className="flex items-center gap-4">
-//             <span className="text-sm text-slate-400">Welcome, {profile.name}</span>
-//             <button
-//               onClick={handleLogout}
-//               className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
-//             >
-//               Logout
-//             </button>
-//           </div>
-//         </div>
+//       <nav className="border-b border-slate-800 p-4">
+//         <button
+//           onClick={() => router.push('/dashboard')}
+//           className="text-sm text-slate-400 hover:text-slate-300"
+//         >
+//           ← Back to Dashboard
+//         </button>
 //       </nav>
 
 //       <div className="max-w-7xl mx-auto px-4 py-8">
-//         <div className="mb-8 animate-fadeUp">
-//           <h2 className="font-display text-3xl font-bold mb-2">
-//             Welcome back, {profile.name}
-//           </h2>
-//           <p className="text-slate-400">Your contribution to democratic dialogue</p>
+//         <div className="flex justify-between items-center mb-8 animate-fadeUp">
+//           <div>
+//             <h2 className="font-display text-3xl font-bold mb-2">Active Dialogues</h2>
+//             <p className="text-slate-400">Join ongoing conversations or start new ones</p>
+//           </div>
+//           <Button onClick={() => setShowCreate(true)}>
+//             + New Dialogue
+//           </Button>
 //         </div>
 
-//         {/* Stats */}
-//         <div className="grid md:grid-cols-3 gap-6 mb-8 animate-fadeUp">
-//           {[
-//             { label: 'Dialogues', value: stats.dialogues, icon: '⚖', color: 'text-blue-400' },
-//             { label: 'Syntheses', value: stats.syntheses, icon: '⬡', color: 'text-green-400' },
-//             { label: 'Verifications', value: stats.verifications, icon: '✦', color: 'text-amber-400' },
-//           ].map((stat) => (
-//             <Card key={stat.label} className="text-center">
-//               <div className={`text-3xl mb-2 ${stat.color}`}>{stat.icon}</div>
-//               <div className="font-display text-4xl font-bold mb-2">{stat.value}</div>
-//               <div className="text-sm text-slate-400">{stat.label}</div>
-//             </Card>
-//           ))}
-//         </div>
-
-//         {/* Main Actions */}
-//         <div className="grid md:grid-cols-2 gap-6">
-//           {/* Belief Profile */}
-//           <Card className="animate-fadeUp" style={{ animationDelay: '100ms' }}>
-//             <h3 className="font-display text-xl font-bold mb-4">
-//               {profile.belief_profile ? 'Your Belief Profile' : 'Get Started'}
-//             </h3>
-//             {profile.belief_profile ? (
-//               <div>
-//                 <p className="text-sm text-slate-300 mb-3 leading-relaxed">
-//                   {profile.belief_profile.worldview}
-//                 </p>
-//                 <div className="flex flex-wrap gap-2">
-//                   {profile.belief_profile.coreValues?.map((value) => (
-//                     <Tag key={value} color="blue">{value}</Tag>
-//                   ))}
-//                 </div>
-//               </div>
-//             ) : (
-//               <div>
-//                 <p className="text-sm text-slate-400 mb-4">
-//                   Complete your belief mapping to participate in dialogues
-//                 </p>
-//                 <Link
-//                   href="/belief-mapping"
-//                   className="inline-block px-5 py-2.5 bg-amber-400 text-slate-950 rounded font-semibold text-sm hover:bg-amber-300 transition-colors"
-//                 >
-//                   Start Belief Mapping →
-//                 </Link>
-//               </div>
-//             )}
+//         {dialogues.length === 0 ? (
+//           <Card className="text-center py-12 animate-fadeUp">
+//             <p className="text-slate-400 mb-6">
+//               No dialogues yet. Create the first one!
+//             </p>
+//             <Button onClick={() => setShowCreate(true)}>
+//               Create Dialogue →
+//             </Button>
 //           </Card>
+//         ) : (
+//           <div className="space-y-4">
+//             {dialogues.map((dialogue, i) => {
+//               const participants = dialogue.dialogue_participants?.map((p: any) => p.users) || []
+//               const messageCount = dialogue.messages?.length || 0
+//               const isParticipant = participants.some((p: any) => p.id === user.id)
 
-//           {/* Quick Actions */}
-//           <Card className="animate-fadeUp" style={{ animationDelay: '200ms' }}>
-//             <h3 className="font-display text-xl font-bold mb-4">Quick Actions</h3>
-//             <div className="space-y-3">
-//               {[
-//                 { href: '/dialogues', icon: '⚖', label: 'Join Dialogue', desc: 'Participate in cross-partisan conversation' },
-//                 { href: '/verification', icon: '✦', label: 'Verify Consensus', desc: 'Review and approve syntheses' },
-//               ].map((action) => (
-//                 <Link
-//                   key={action.href}
-//                   href={action.href}
-//                   className="flex items-center gap-4 p-4 bg-slate-800 border border-slate-700 rounded hover:border-amber-400/30 transition-all group"
+//               return (
+//                 <Card
+//                   key={dialogue.id}
+//                   className={`
+//                     cursor-pointer hover:border-amber-400/30 transition-all animate-fadeUp
+//                     ${isParticipant ? 'border-amber-400/20' : ''}
+//                   `}
+//                   style={{ animationDelay: `${i * 50}ms` }}
+//                   onClick={() => router.push(`/dialogues/${dialogue.id}`)}
 //                 >
-//                   <span className="text-2xl">{action.icon}</span>
-//                   <div>
-//                     <div className="font-semibold text-sm group-hover:text-amber-300 transition-colors">
-//                       {action.label}
+//                   <div className="flex justify-between items-start mb-3">
+//                     <div>
+//                       <h3 className="font-display text-xl font-bold mb-1">
+//                         {dialogue.topic}
+//                       </h3>
+//                       <p className="text-sm text-slate-400">
+//                         {participants.length} participants · {messageCount} messages
+//                       </p>
 //                     </div>
-//                     <div className="text-xs text-slate-500">{action.desc}</div>
+//                     <Tag color={dialogue.status === 'active' ? 'green' : 'blue'}>
+//                       {dialogue.status}
+//                     </Tag>
 //                   </div>
-//                 </Link>
-//               ))}
-//             </div>
-//           </Card>
-//         </div>
 
-//         {/* Navigation Cards */}
-//         <div className="mt-8 grid md:grid-cols-4 gap-4">
-//           {[
-//             { href: '/belief-mapping', icon: '◎', label: 'Belief Mapping' },
-//             { href: '/dialogues', icon: '⚖', label: 'Dialogues' },
-//             { href: '/verification', icon: '✦', label: 'Verification' },
-//             { href: '/dashboard', icon: '⌂', label: 'Dashboard' },
-//           ].map((nav, i) => (
-//             <Link
-//               key={nav.href}
-//               href={nav.href}
-//               className="p-4 bg-slate-900 border border-slate-800 rounded hover:border-amber-400/30 transition-all text-center group animate-fadeUp"
-//               style={{ animationDelay: `${300 + i * 50}ms` }}
-//             >
-//               <div className="text-2xl mb-2">{nav.icon}</div>
-//               <div className="text-sm font-medium group-hover:text-amber-300 transition-colors">
-//                 {nav.label}
-//               </div>
-//             </Link>
-//           ))}
-//         </div>
+//                   {dialogue.description && (
+//                     <p className="text-sm text-slate-300 mb-3">{dialogue.description}</p>
+//                   )}
+
+//                   <div className="flex flex-wrap gap-2">
+//                     {participants.map((p: any) => (
+//                       <Tag key={p.id} color="blue">{p.name}</Tag>
+//                     ))}
+//                   </div>
+//                 </Card>
+//               )
+//             })}
+//           </div>
+//         )}
 //       </div>
 //     </div>
 //   )
