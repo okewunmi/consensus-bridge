@@ -316,13 +316,404 @@
 //   )
 // }
 
+
+
+// 'use client'
+
+// import { useEffect, useState, useRef } from 'react'
+// import { useRouter, useParams } from 'next/navigation'
+// import { createClient } from '@/lib/supabase/client'
+// import { useUser } from '@/lib/hooks/useUser'
+// import { useRealtimeMessages } from '@/lib/hooks/useRealtime'
+// import { Card } from '@/components/ui/Card'
+// import { Tag } from '@/components/ui/Tag'
+// import { Button } from '@/components/ui/Button'
+// import { Spinner } from '@/components/ui/Spinner'
+
+// const supabase = createClient()
+
+// export default function DialogueRoomPage() {
+//   const params = useParams()
+//   const dialogueId = params.id
+//   const { user, profile, loading: userLoading } = useUser()
+//   const { messages, loading: messagesLoading } = useRealtimeMessages(dialogueId)
+//   const [dialogue, setDialogue] = useState(null)
+//   const [input, setInput] = useState('')
+//   const [sending, setSending] = useState(false)        // user sending message
+//   const [aiThinking, setAiThinking] = useState(false)  // AI is generating reply
+//   const [generating, setGenerating] = useState(false)  // synthesis generation
+//   const messagesEndRef = useRef(null)
+//   const router = useRouter()
+
+//   // ── Auth guard ──────────────────────────────────────────────────────────────
+//   useEffect(() => {
+//     if (!userLoading && !user) router.push('/auth')
+//   }, [user, userLoading, router])
+
+//   // ── Load dialogue details ───────────────────────────────────────────────────
+//   useEffect(() => {
+//     if (!user) return
+//     const load = async () => {
+//       const { data, error } = await supabase
+//         .from('dialogues')
+//         .select(`
+//           *,
+//           dialogue_participants (
+//             user_id,
+//             users ( id, name, political_lean, belief_profile )
+//           )
+//         `)
+//         .eq('id', dialogueId)
+//         .single()
+//       if (error) console.error('loadDialogue error:', error)
+//       if (data) setDialogue(data)
+//     }
+//     load()
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [user])
+
+//   // ── Auto-scroll ─────────────────────────────────────────────────────────────
+//   useEffect(() => {
+//     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+//   }, [messages, aiThinking])
+
+//   // ── Send message + trigger AI reply automatically ───────────────────────────
+//   const sendMessage = async () => {
+//     if (!input.trim() || sending || aiThinking || !user || !profile) return
+
+//     const messageText = input
+//     setSending(true)
+//     setInput('')
+
+//     // 1. Save user's message
+//     const { error } = await supabase
+//       .from('messages')
+//       .insert({
+//         dialogue_id: dialogueId,
+//         user_id: user.id,
+//         user_name: profile.name,
+//         user_lean: profile.political_lean,
+//         content: messageText,
+//         is_ai: false
+//       })
+
+//     if (error) {
+//       console.error('sendMessage error:', error)
+//       alert(error.message)
+//       setInput(messageText) // restore
+//       setSending(false)
+//       return
+//     }
+
+//     setSending(false)
+
+//     // 2. Auto-trigger AI facilitation after every message
+//     //    (matches reference implementation behaviour)
+//     triggerAiFacilitation()
+//   }
+
+//   const triggerAiFacilitation = async () => {
+//     setAiThinking(true)
+//     try {
+//       const { facilitateDialogue } = await import('@/app/actions/ai')
+//       const result = await facilitateDialogue(dialogueId)
+//       if (!result.success) {
+//         console.error('AI facilitation failed:', result.error)
+//         // Don't alert – silent failure keeps UX clean
+//       }
+//       // AI message appears automatically via realtime subscription
+//     } catch (err) {
+//       console.error('AI facilitation exception:', err)
+//     }
+//     setAiThinking(false)
+//   }
+
+//   const handleKeyPress = (e) => {
+//     if (e.key === 'Enter' && !e.shiftKey) {
+//       e.preventDefault()
+//       sendMessage()
+//     }
+//   }
+
+//   // ── Generate synthesis ──────────────────────────────────────────────────────
+//   const handleGenerateSynthesis = async () => {
+//     const humanMessages = messages.filter(m => !m.is_ai)
+//     if (humanMessages.length < 4) {
+//       alert('Need at least 4 human messages to generate synthesis')
+//       return
+//     }
+//     setGenerating(true)
+//     try {
+//       const { generateSynthesis } = await import('@/app/actions/ai')
+//       const result = await generateSynthesis(dialogueId)
+//       if (!result.success) {
+//         alert('Synthesis failed: ' + result.error)
+//       } else {
+//         alert('Synthesis generated! Redirecting to Verification...')
+//         router.push('/verification')
+//       }
+//     } catch (err) {
+//       alert('Error: ' + err.message)
+//     }
+//     setGenerating(false)
+//   }
+
+//   // ── Render guards ───────────────────────────────────────────────────────────
+//   if (userLoading || messagesLoading) {
+//     return (
+//       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+//         <Spinner size={32} />
+//       </div>
+//     )
+//   }
+//   if (!user || !profile || !dialogue) return null
+
+//   const participants = dialogue.dialogue_participants?.map(p => p.users).filter(Boolean) || []
+//   const isParticipant = participants.some(p => p.id === user.id)
+//   const humanMessageCount = messages.filter(m => !m.is_ai).length
+
+//   return (
+//     <div className="h-screen bg-slate-950 flex flex-col">
+
+//       {/* ── Header ── */}
+//       <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-lg flex-shrink-0">
+//         <div className="max-w-7xl mx-auto px-4 py-4">
+//           <button
+//             onClick={() => router.push('/dialogues')}
+//             className="text-sm text-slate-400 hover:text-slate-300 mb-3 block"
+//           >
+//             ← Back to Dialogues
+//           </button>
+//           <div className="flex justify-between items-start gap-4 flex-wrap">
+//             <div>
+//               <h1 className="font-display text-2xl font-bold mb-1">{dialogue.topic}</h1>
+//               <p className="text-sm text-slate-400">
+//                 {participants.length} participants · {messages.length} messages
+//                 {aiThinking && (
+//                   <span className="ml-2 text-amber-400 animate-pulse">· AI is thinking...</span>
+//                 )}
+//               </p>
+//             </div>
+//             <div className="flex gap-2 items-center flex-wrap">
+//               <Tag color={dialogue.status === 'active' ? 'green' : 'blue'}>
+//                 {dialogue.status}
+//               </Tag>
+//               {humanMessageCount >= 4 && dialogue.status === 'active' && (
+//                 <Button onClick={handleGenerateSynthesis} loading={generating}>
+//                   Generate Synthesis →
+//                 </Button>
+//               )}
+//             </div>
+//           </div>
+//         </div>
+//       </nav>
+
+//       {/* ── Body ── */}
+//       <div className="flex-1 overflow-hidden flex">
+
+//         {/* Messages column */}
+//         <div className="flex-1 flex flex-col min-w-0">
+
+//           {/* Message list */}
+//           <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+//             {messages.length === 0 && !aiThinking && (
+//               <div className="text-center py-16 text-slate-500">
+//                 <p className="text-lg mb-2">Start the conversation</p>
+//                 <p className="text-sm">The AI facilitator will respond after each message</p>
+//               </div>
+//             )}
+
+//             {messages.map((msg) => {
+//               const isCurrentUser = msg.user_id === user.id
+//               const isAI = msg.is_ai
+
+//               return (
+//                 <div
+//                   key={msg.id}
+//                   className={`flex gap-3 ${isCurrentUser && !isAI ? 'flex-row-reverse' : ''}`}
+//                 >
+//                   {/* Avatar */}
+//                   <div className={`
+//                     w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold
+//                     ${isAI
+//                       ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400'
+//                       : isCurrentUser
+//                         ? 'bg-blue-400/10 border border-blue-400/30 text-blue-400'
+//                         : 'bg-green-400/10 border border-green-400/30 text-green-400'
+//                     }
+//                   `}>
+//                     {isAI ? '⚖' : (msg.user_name?.[0] || '?')}
+//                   </div>
+
+//                   {/* Bubble */}
+//                   <div className={`flex-1 max-w-2xl ${isCurrentUser && !isAI ? 'flex flex-col items-end' : ''}`}>
+//                     <div className={`
+//                       px-4 py-3 rounded-lg
+//                       ${isAI
+//                         ? 'bg-amber-400/5 border border-amber-400/20'
+//                         : isCurrentUser
+//                           ? 'bg-blue-400/10 border border-blue-400/20'
+//                           : 'bg-slate-800 border border-slate-700'
+//                       }
+//                     `}>
+//                       <div className="flex items-center gap-2 mb-1">
+//                         <span className={`text-xs font-mono uppercase tracking-wider
+//                           ${isAI ? 'text-amber-400' : isCurrentUser ? 'text-blue-400' : 'text-green-400'}
+//                         `}>
+//                           {isAI ? '⚖ Facilitator' : msg.user_name}
+//                         </span>
+//                         {msg.user_lean && !isAI && (
+//                           <span className="text-xs text-slate-500">({msg.user_lean})</span>
+//                         )}
+//                       </div>
+//                       <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+//                         {msg.content}
+//                       </p>
+//                     </div>
+//                   </div>
+//                 </div>
+//               )
+//             })}
+
+//             {/* AI typing indicator */}
+//             {aiThinking && (
+//               <div className="flex gap-3">
+//                 <div className="w-8 h-8 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
+//                   ⚖
+//                 </div>
+//                 <div className="px-4 py-3 rounded-lg bg-amber-400/5 border border-amber-400/20">
+//                   <div className="text-xs font-mono uppercase tracking-wider text-amber-400 mb-1">
+//                     ⚖ Facilitator
+//                   </div>
+//                   <div className="flex gap-1 items-center">
+//                     <span className="w-2 h-2 bg-amber-400/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+//                     <span className="w-2 h-2 bg-amber-400/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+//                     <span className="w-2 h-2 bg-amber-400/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+
+//             <div ref={messagesEndRef} />
+//           </div>
+
+//           {/* Input area */}
+//           <div className="border-t border-slate-800 bg-slate-900 p-4 flex-shrink-0">
+//             {!isParticipant ? (
+//               <div className="text-center py-2 text-sm text-slate-400">
+//                 You are viewing this dialogue.{' '}
+//                 <button
+//                   onClick={() => router.push('/dialogues')}
+//                   className="text-amber-400 hover:underline"
+//                 >
+//                   Go back to join
+//                 </button>
+//               </div>
+//             ) : (
+//               <div className="flex gap-3">
+//                 <textarea
+//                   value={input}
+//                   onChange={(e) => setInput(e.target.value)}
+//                   onKeyDown={handleKeyPress}
+//                   placeholder={aiThinking ? 'AI is responding...' : 'Share your perspective... (Enter to send, Shift+Enter for new line)'}
+//                   disabled={aiThinking || sending}
+//                   rows={2}
+//                   className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded text-slate-100 placeholder-slate-500 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none transition-colors resize-none disabled:opacity-50"
+//                 />
+//                 <Button
+//                   onClick={sendMessage}
+//                   disabled={!input.trim() || sending || aiThinking}
+//                   className="self-end"
+//                 >
+//                   {sending ? <Spinner size={14} /> : '↑ Send'}
+//                 </Button>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+
+//         {/* ── Sidebar ── */}
+//         <div className="w-72 border-l border-slate-800 bg-slate-900/30 p-4 space-y-4 overflow-y-auto flex-shrink-0 hidden lg:block">
+
+//           {/* Participants */}
+//           <Card>
+//             <div className="text-xs text-amber-400 font-mono uppercase tracking-wider mb-3">
+//               Participants
+//             </div>
+//             <div className="space-y-3">
+//               {participants.map(p => (
+//                 <div key={p.id} className="flex items-center gap-3">
+//                   <div className={`
+//                     w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
+//                     ${p.id === user.id ? 'bg-blue-400/20 text-blue-400' : 'bg-slate-800 text-slate-300'}
+//                   `}>
+//                     {p.name?.[0] || '?'}
+//                   </div>
+//                   <div className="min-w-0">
+//                     <div className="text-sm text-slate-300 font-semibold truncate">
+//                       {p.name}{p.id === user.id ? ' (you)' : ''}
+//                     </div>
+//                     <div className="text-xs text-slate-500">{p.political_lean}</div>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           </Card>
+
+//           {/* Progress */}
+//           <Card>
+//             <div className="text-xs text-slate-400 font-mono uppercase tracking-wider mb-2">
+//               Progress
+//             </div>
+//             <div className="text-3xl font-display font-bold text-amber-400">
+//               {humanMessageCount}
+//             </div>
+//             <div className="text-xs text-slate-500 mt-1">
+//               {humanMessageCount >= 4
+//                 ? '✅ Ready to generate synthesis!'
+//                 : `${4 - humanMessageCount} more messages to unlock synthesis`}
+//             </div>
+//             <div className="mt-2 h-1 bg-slate-800 rounded-full overflow-hidden">
+//               <div
+//                 className="h-full bg-amber-400 rounded-full transition-all"
+//                 style={{ width: `${Math.min((humanMessageCount / 4) * 100, 100)}%` }}
+//               />
+//             </div>
+//           </Card>
+
+//           {/* Guidelines */}
+//           <Card>
+//             <div className="text-xs text-amber-400 font-mono uppercase tracking-wider mb-3">
+//               Guidelines
+//             </div>
+//             <div className="space-y-2 text-xs text-slate-400">
+//               {[
+//                 'Speak from experience',
+//                 'Assume good faith',
+//                 'Ask before challenging',
+//                 'Seek shared values',
+//               ].map(g => (
+//                 <div key={g} className="flex gap-2">
+//                   <span className="text-amber-400">◆</span>
+//                   {g}
+//                 </div>
+//               ))}
+//             </div>
+//           </Card>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+
+
+
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/lib/hooks/useUser'
-import { useRealtimeMessages } from '@/lib/hooks/useRealtime'
 import { Card } from '@/components/ui/Card'
 import { Tag } from '@/components/ui/Tag'
 import { Button } from '@/components/ui/Button'
@@ -334,25 +725,27 @@ export default function DialogueRoomPage() {
   const params = useParams()
   const dialogueId = params.id
   const { user, profile, loading: userLoading } = useUser()
-  const { messages, loading: messagesLoading } = useRealtimeMessages(dialogueId)
+  const [messages, setMessages] = useState([])
   const [dialogue, setDialogue] = useState(null)
   const [input, setInput] = useState('')
-  const [sending, setSending] = useState(false)        // user sending message
-  const [aiThinking, setAiThinking] = useState(false)  // AI is generating reply
-  const [generating, setGenerating] = useState(false)  // synthesis generation
+  const [sending, setSending] = useState(false)
+  const [aiThinking, setAiThinking] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [realtimeError, setRealtimeError] = useState(false)
   const messagesEndRef = useRef(null)
+  const pollingInterval = useRef(null)
   const router = useRouter()
 
-  // ── Auth guard ──────────────────────────────────────────────────────────────
+  // Auth guard
   useEffect(() => {
     if (!userLoading && !user) router.push('/auth')
   }, [user, userLoading, router])
 
-  // ── Load dialogue details ───────────────────────────────────────────────────
+  // Load dialogue
   useEffect(() => {
     if (!user) return
     const load = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('dialogues')
         .select(`
           *,
@@ -363,19 +756,74 @@ export default function DialogueRoomPage() {
         `)
         .eq('id', dialogueId)
         .single()
-      if (error) console.error('loadDialogue error:', error)
       if (data) setDialogue(data)
     }
     load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }, [user, dialogueId])
 
-  // ── Auto-scroll ─────────────────────────────────────────────────────────────
+  // Load messages + Setup Realtime OR Polling fallback
+  useEffect(() => {
+    if (!dialogueId) return
+
+    let channel = null
+    let mounted = true
+
+    const loadMessages = async () => {
+      const { data } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('dialogue_id', dialogueId)
+        .order('created_at', { ascending: true })
+      if (mounted && data) setMessages(data)
+    }
+
+    // Try Realtime first
+    const setupRealtime = async () => {
+      await loadMessages()
+
+      channel = supabase
+        .channel(`dialogue:${dialogueId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `dialogue_id=eq.${dialogueId}`
+          },
+          (payload) => {
+            if (mounted) setMessages(prev => [...prev, payload.new])
+          }
+        )
+        .subscribe((status) => {
+          console.log('Realtime status:', status)
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Realtime connected')
+            setRealtimeError(false)
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('⚠️ Realtime failed, falling back to polling')
+            setRealtimeError(true)
+            // Start polling fallback
+            pollingInterval.current = setInterval(loadMessages, 3000)
+          }
+        })
+    }
+
+    setupRealtime()
+
+    return () => {
+      mounted = false
+      if (channel) supabase.removeChannel(channel)
+      if (pollingInterval.current) clearInterval(pollingInterval.current)
+    }
+  }, [dialogueId])
+
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, aiThinking])
 
-  // ── Send message + trigger AI reply automatically ───────────────────────────
+  // Send message
   const sendMessage = async () => {
     if (!input.trim() || sending || aiThinking || !user || !profile) return
 
@@ -383,45 +831,67 @@ export default function DialogueRoomPage() {
     setSending(true)
     setInput('')
 
-    // 1. Save user's message
-    const { error } = await supabase
-      .from('messages')
-      .insert({
-        dialogue_id: dialogueId,
-        user_id: user.id,
-        user_name: profile.name,
-        user_lean: profile.political_lean,
-        content: messageText,
-        is_ai: false
-      })
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          dialogue_id: dialogueId,
+          user_id: user.id,
+          user_name: profile.name,
+          user_lean: profile.political_lean,
+          content: messageText,
+          is_ai: false
+        })
 
-    if (error) {
-      console.error('sendMessage error:', error)
-      alert(error.message)
-      setInput(messageText) // restore
-      setSending(false)
-      return
+      if (error) throw error
+
+      // If realtime is broken, manually reload messages
+      if (realtimeError) {
+        setTimeout(async () => {
+          const { data } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('dialogue_id', dialogueId)
+            .order('created_at', { ascending: true })
+          if (data) setMessages(data)
+        }, 500)
+      }
+
+      // Trigger AI after small delay
+      setTimeout(() => triggerAi(), 800)
+    } catch (err) {
+      console.error('Send error:', err)
+      alert('Failed to send: ' + err.message)
+      setInput(messageText)
     }
 
     setSending(false)
-
-    // 2. Auto-trigger AI facilitation after every message
-    //    (matches reference implementation behaviour)
-    triggerAiFacilitation()
   }
 
-  const triggerAiFacilitation = async () => {
+  const triggerAi = async () => {
     setAiThinking(true)
     try {
       const { facilitateDialogue } = await import('@/app/actions/ai')
       const result = await facilitateDialogue(dialogueId)
+
       if (!result.success) {
-        console.error('AI facilitation failed:', result.error)
-        // Don't alert – silent failure keeps UX clean
+        console.error('AI failed:', result.error)
+        // Don't alert - keep UX clean, just log
       }
-      // AI message appears automatically via realtime subscription
+
+      // If realtime broken, manually reload
+      if (realtimeError) {
+        setTimeout(async () => {
+          const { data } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('dialogue_id', dialogueId)
+            .order('created_at', { ascending: true })
+          if (data) setMessages(data)
+        }, 1000)
+      }
     } catch (err) {
-      console.error('AI facilitation exception:', err)
+      console.error('AI exception:', err)
     }
     setAiThinking(false)
   }
@@ -433,11 +903,10 @@ export default function DialogueRoomPage() {
     }
   }
 
-  // ── Generate synthesis ──────────────────────────────────────────────────────
   const handleGenerateSynthesis = async () => {
     const humanMessages = messages.filter(m => !m.is_ai)
     if (humanMessages.length < 4) {
-      alert('Need at least 4 human messages to generate synthesis')
+      alert('Need at least 4 human messages')
       return
     }
     setGenerating(true)
@@ -445,9 +914,9 @@ export default function DialogueRoomPage() {
       const { generateSynthesis } = await import('@/app/actions/ai')
       const result = await generateSynthesis(dialogueId)
       if (!result.success) {
-        alert('Synthesis failed: ' + result.error)
+        alert('Failed: ' + result.error)
       } else {
-        alert('Synthesis generated! Redirecting to Verification...')
+        alert('Synthesis generated!')
         router.push('/verification')
       }
     } catch (err) {
@@ -456,28 +925,29 @@ export default function DialogueRoomPage() {
     setGenerating(false)
   }
 
-  // ── Render guards ───────────────────────────────────────────────────────────
-  if (userLoading || messagesLoading) {
+  // Render guards
+  if (userLoading || !dialogue) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <Spinner size={32} />
       </div>
     )
   }
-  if (!user || !profile || !dialogue) return null
+  if (!user || !profile) return null
 
   const participants = dialogue.dialogue_participants?.map(p => p.users).filter(Boolean) || []
   const isParticipant = participants.some(p => p.id === user.id)
-  const humanMessageCount = messages.filter(m => !m.is_ai).length
+  const humanCount = messages.filter(m => !m.is_ai).length
 
   return (
     <div className="h-screen bg-slate-950 flex flex-col">
-
-      {/* ── Header ── */}
       <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-lg flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <button
-            onClick={() => router.push('/dialogues')}
+            onClick={() => {
+              router.push('/dialogues')
+              router.refresh()
+            }}
             className="text-sm text-slate-400 hover:text-slate-300 mb-3 block"
           >
             ← Back to Dialogues
@@ -487,18 +957,17 @@ export default function DialogueRoomPage() {
               <h1 className="font-display text-2xl font-bold mb-1">{dialogue.topic}</h1>
               <p className="text-sm text-slate-400">
                 {participants.length} participants · {messages.length} messages
-                {aiThinking && (
-                  <span className="ml-2 text-amber-400 animate-pulse">· AI is thinking...</span>
-                )}
+                {aiThinking && <span className="ml-2 text-amber-400">· AI thinking...</span>}
+                {realtimeError && <span className="ml-2 text-red-400">· Using polling (realtime unavailable)</span>}
               </p>
             </div>
-            <div className="flex gap-2 items-center flex-wrap">
+            <div className="flex gap-2">
               <Tag color={dialogue.status === 'active' ? 'green' : 'blue'}>
                 {dialogue.status}
               </Tag>
-              {humanMessageCount >= 4 && dialogue.status === 'active' && (
+              {humanCount >= 4 && (
                 <Button onClick={handleGenerateSynthesis} loading={generating}>
-                  Generate Synthesis →
+                  Synthesize →
                 </Button>
               )}
             </div>
@@ -506,104 +975,67 @@ export default function DialogueRoomPage() {
         </div>
       </nav>
 
-      {/* ── Body ── */}
       <div className="flex-1 overflow-hidden flex">
-
-        {/* Messages column */}
         <div className="flex-1 flex flex-col min-w-0">
-
-          {/* Message list */}
           <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
             {messages.length === 0 && !aiThinking && (
               <div className="text-center py-16 text-slate-500">
-                <p className="text-lg mb-2">Start the conversation</p>
-                <p className="text-sm">The AI facilitator will respond after each message</p>
+                <p>No messages yet. Start the conversation!</p>
               </div>
             )}
 
-            {messages.map((msg) => {
-              const isCurrentUser = msg.user_id === user.id
+            {messages.map(msg => {
+              const isMe = msg.user_id === user.id
               const isAI = msg.is_ai
-
               return (
-                <div
-                  key={msg.id}
-                  className={`flex gap-3 ${isCurrentUser && !isAI ? 'flex-row-reverse' : ''}`}
-                >
-                  {/* Avatar */}
-                  <div className={`
-                    w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold
-                    ${isAI
-                      ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400'
-                      : isCurrentUser
-                        ? 'bg-blue-400/10 border border-blue-400/30 text-blue-400'
-                        : 'bg-green-400/10 border border-green-400/30 text-green-400'
-                    }
-                  `}>
+                <div key={msg.id} className={`flex gap-3 ${isMe && !isAI ? 'flex-row-reverse' : ''}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                    isAI ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400'
+                    : isMe ? 'bg-blue-400/10 border border-blue-400/30 text-blue-400'
+                    : 'bg-green-400/10 border border-green-400/30 text-green-400'
+                  }`}>
                     {isAI ? '⚖' : (msg.user_name?.[0] || '?')}
                   </div>
-
-                  {/* Bubble */}
-                  <div className={`flex-1 max-w-2xl ${isCurrentUser && !isAI ? 'flex flex-col items-end' : ''}`}>
-                    <div className={`
-                      px-4 py-3 rounded-lg
-                      ${isAI
-                        ? 'bg-amber-400/5 border border-amber-400/20'
-                        : isCurrentUser
-                          ? 'bg-blue-400/10 border border-blue-400/20'
-                          : 'bg-slate-800 border border-slate-700'
-                      }
-                    `}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-xs font-mono uppercase tracking-wider
-                          ${isAI ? 'text-amber-400' : isCurrentUser ? 'text-blue-400' : 'text-green-400'}
-                        `}>
-                          {isAI ? '⚖ Facilitator' : msg.user_name}
-                        </span>
-                        {msg.user_lean && !isAI && (
-                          <span className="text-xs text-slate-500">({msg.user_lean})</span>
-                        )}
+                  <div className="flex-1 max-w-2xl">
+                    <div className={`px-4 py-3 rounded-lg ${
+                      isAI ? 'bg-amber-400/5 border border-amber-400/20'
+                      : isMe ? 'bg-blue-400/10 border border-blue-400/20'
+                      : 'bg-slate-800 border border-slate-700'
+                    }`}>
+                      <div className={`text-xs font-mono uppercase mb-1 ${
+                        isAI ? 'text-amber-400' : isMe ? 'text-blue-400' : 'text-green-400'
+                      }`}>
+                        {isAI ? '⚖ Facilitator' : msg.user_name}
+                        {msg.user_lean && !isAI && <span className="text-slate-500 ml-1">({msg.user_lean})</span>}
                       </div>
-                      <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
-                        {msg.content}
-                      </p>
+                      <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                     </div>
                   </div>
                 </div>
               )
             })}
 
-            {/* AI typing indicator */}
             {aiThinking && (
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                  ⚖
-                </div>
+                <div className="w-8 h-8 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center text-xs font-bold">⚖</div>
                 <div className="px-4 py-3 rounded-lg bg-amber-400/5 border border-amber-400/20">
-                  <div className="text-xs font-mono uppercase tracking-wider text-amber-400 mb-1">
-                    ⚖ Facilitator
-                  </div>
-                  <div className="flex gap-1 items-center">
-                    <span className="w-2 h-2 bg-amber-400/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-amber-400/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 bg-amber-400/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="text-xs font-mono uppercase text-amber-400 mb-1">⚖ Facilitator</div>
+                  <div className="flex gap-1">
+                    {[0, 150, 300].map(delay => (
+                      <span key={delay} className="w-2 h-2 bg-amber-400/60 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+                    ))}
                   </div>
                 </div>
               </div>
             )}
-
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input area */}
           <div className="border-t border-slate-800 bg-slate-900 p-4 flex-shrink-0">
             {!isParticipant ? (
-              <div className="text-center py-2 text-sm text-slate-400">
-                You are viewing this dialogue.{' '}
-                <button
-                  onClick={() => router.push('/dialogues')}
-                  className="text-amber-400 hover:underline"
-                >
+              <div className="text-center text-sm text-slate-400">
+                Viewing only.{' '}
+                <button onClick={() => router.push('/dialogues')} className="text-amber-400 hover:underline">
                   Go back to join
                 </button>
               </div>
@@ -613,89 +1045,42 @@ export default function DialogueRoomPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  placeholder={aiThinking ? 'AI is responding...' : 'Share your perspective... (Enter to send, Shift+Enter for new line)'}
+                  placeholder={aiThinking ? 'AI is responding...' : 'Type your message...'}
                   disabled={aiThinking || sending}
                   rows={2}
-                  className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded text-slate-100 placeholder-slate-500 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none transition-colors resize-none disabled:opacity-50"
+                  className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded text-slate-100 placeholder-slate-500 focus:border-amber-400 outline-none resize-none disabled:opacity-50"
                 />
-                <Button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || sending || aiThinking}
-                  className="self-end"
-                >
-                  {sending ? <Spinner size={14} /> : '↑ Send'}
+                <Button onClick={sendMessage} disabled={!input.trim() || sending || aiThinking} className="self-end">
+                  {sending ? <Spinner size={14} /> : '↑'}
                 </Button>
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Sidebar ── */}
-        <div className="w-72 border-l border-slate-800 bg-slate-900/30 p-4 space-y-4 overflow-y-auto flex-shrink-0 hidden lg:block">
-
-          {/* Participants */}
+        {/* Sidebar */}
+        <div className="w-72 border-l border-slate-800 bg-slate-900/30 p-4 space-y-4 overflow-y-auto hidden lg:block">
           <Card>
-            <div className="text-xs text-amber-400 font-mono uppercase tracking-wider mb-3">
-              Participants
-            </div>
-            <div className="space-y-3">
-              {participants.map(p => (
-                <div key={p.id} className="flex items-center gap-3">
-                  <div className={`
-                    w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
-                    ${p.id === user.id ? 'bg-blue-400/20 text-blue-400' : 'bg-slate-800 text-slate-300'}
-                  `}>
-                    {p.name?.[0] || '?'}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm text-slate-300 font-semibold truncate">
-                      {p.name}{p.id === user.id ? ' (you)' : ''}
-                    </div>
-                    <div className="text-xs text-slate-500">{p.political_lean}</div>
-                  </div>
+            <div className="text-xs text-amber-400 font-mono uppercase mb-3">Participants</div>
+            {participants.map(p => (
+              <div key={p.id} className="flex items-center gap-3 mb-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                  p.id === user.id ? 'bg-blue-400/20 text-blue-400' : 'bg-slate-800 text-slate-300'
+                }`}>
+                  {p.name?.[0]}
                 </div>
-              ))}
-            </div>
+                <div className="text-sm text-slate-300">
+                  {p.name}{p.id === user.id ? ' (you)' : ''}
+                </div>
+              </div>
+            ))}
           </Card>
 
-          {/* Progress */}
           <Card>
-            <div className="text-xs text-slate-400 font-mono uppercase tracking-wider mb-2">
-              Progress
-            </div>
-            <div className="text-3xl font-display font-bold text-amber-400">
-              {humanMessageCount}
-            </div>
+            <div className="text-xs text-slate-400 font-mono uppercase mb-2">Progress</div>
+            <div className="text-3xl font-display font-bold text-amber-400">{humanCount}</div>
             <div className="text-xs text-slate-500 mt-1">
-              {humanMessageCount >= 4
-                ? '✅ Ready to generate synthesis!'
-                : `${4 - humanMessageCount} more messages to unlock synthesis`}
-            </div>
-            <div className="mt-2 h-1 bg-slate-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-amber-400 rounded-full transition-all"
-                style={{ width: `${Math.min((humanMessageCount / 4) * 100, 100)}%` }}
-              />
-            </div>
-          </Card>
-
-          {/* Guidelines */}
-          <Card>
-            <div className="text-xs text-amber-400 font-mono uppercase tracking-wider mb-3">
-              Guidelines
-            </div>
-            <div className="space-y-2 text-xs text-slate-400">
-              {[
-                'Speak from experience',
-                'Assume good faith',
-                'Ask before challenging',
-                'Seek shared values',
-              ].map(g => (
-                <div key={g} className="flex gap-2">
-                  <span className="text-amber-400">◆</span>
-                  {g}
-                </div>
-              ))}
+              {humanCount >= 4 ? '✅ Ready for synthesis' : `${4 - humanCount} more to unlock`}
             </div>
           </Card>
         </div>
