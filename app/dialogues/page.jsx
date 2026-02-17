@@ -1,3 +1,4 @@
+
 // 'use client'
 
 // import { useEffect, useState } from 'react'
@@ -308,7 +309,7 @@
 //                           {dialogue.topic}
 //                         </h3>
 //                         {isParticipant && (
-//                           <Tag color="green">You're In</Tag>
+//                           <Tag color="green">You&apos;re In</Tag>
 //                         )}
 //                       </div>
 //                       <p className="text-sm text-slate-400">
@@ -358,6 +359,7 @@
 //     </div>
 //   )
 // }
+
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -474,16 +476,11 @@ export default function DialoguesPage() {
     router.push(`/dialogues/${dialogue.id}`)
   }
 
-  // NEW: Join an existing dialogue
+  // Join an existing dialogue
   const joinDialogue = async (e, dialogueId) => {
-    e.stopPropagation() // Prevent card click from navigating
+    e.stopPropagation()
     
-    if (!user || !profile) {
-      alert('Please complete your belief profile first')
-      return
-    }
-
-    if (!profile.belief_profile) {
+    if (!profile?.belief_profile) {
       alert('Please complete your belief mapping before joining a dialogue')
       router.push('/belief-mapping')
       return
@@ -491,25 +488,36 @@ export default function DialoguesPage() {
 
     setJoiningId(dialogueId)
 
-    const { error } = await supabase
-      .from('dialogue_participants')
-      .insert({
-        dialogue_id: dialogueId,
-        user_id: user.id
-      })
+    try {
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out. Check your connection.')), 8000)
+      )
 
-    if (error) {
-      if (error.code === '23505') {
-        // Already a participant - just navigate
-        router.push(`/dialogues/${dialogueId}`)
-      } else {
-        alert('Could not join dialogue: ' + error.message)
+      const joinPromise = supabase
+        .from('dialogue_participants')
+        .insert({ dialogue_id: dialogueId, user_id: user.id })
+
+      const { error } = await Promise.race([joinPromise, timeoutPromise])
+
+      if (error) {
+        if (error.code === '23505') {
+          // Already a participant - just navigate
+          router.push(`/dialogues/${dialogueId}`)
+          return
+        }
+        console.error('Join error:', error)
+        alert(`Could not join: ${error.message}\n\nCode: ${error.code}`)
         setJoiningId(null)
+        return
       }
-      return
-    }
 
-    router.push(`/dialogues/${dialogueId}`)
+      router.push(`/dialogues/${dialogueId}`)
+    } catch (err) {
+      console.error('Join failed:', err)
+      alert(err.message)
+      setJoiningId(null)
+    }
   }
 
   const toggleUser = (userId) => {
