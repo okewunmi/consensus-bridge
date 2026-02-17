@@ -22,6 +22,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/actions/ai.js", "app/belief-mapping/page.jsx", "components/ui/Button.jsx", "components/ui/Card.jsx", "components/ui/Tag.jsx", "components/ui/index.js", "app/auth/page.jsx", "app/dashboard/page.jsx", "app/dialogues/[id]/page.jsx", "app/verification/page.jsx", "app/verification/[id]/page.jsx", "app/dialogues/page.jsx", "lib/hooks/useRealtime.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/actions/ai.js", "app/belief-mapping/page.jsx", "components/ui/Button.jsx", "components/ui/Card.jsx", "components/ui/Tag.jsx", "components/ui/index.js", "app/auth/page.jsx", "app/dashboard/page.jsx", "app/dialogues/[id]/page.jsx", "app/verification/page.jsx", "app/verification/[id]/page.jsx", "app/dialogues/page.jsx", "lib/hooks/useRealtime.js", "lib/ai/groq.js", "lib/hooks/useUser.js"],
   "exclude": ["node_modules"]
 }
