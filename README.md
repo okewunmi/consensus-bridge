@@ -34,9 +34,9 @@ Before running this app:
 Create `.env.local`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-ANTHROPIC_API_KEY=sk-ant-your-api-key-here
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+ANTHROPIC_API_KEY=
 ```
 
 Get Supabase keys from: **Project Settings → API** in Supabase dashboard
