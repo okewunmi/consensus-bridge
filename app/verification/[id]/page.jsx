@@ -9,80 +9,61 @@ import { Tag } from '@/components/ui/Tag'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 
-export default function SynthesisVerificationPage() {
+const supabase = createClient()
+
+export default function SynthesisDetailPage() {
   const params = useParams()
   const synthesisId = params.id
   const { user, profile, loading: userLoading } = useUser()
   const [synthesis, setSynthesis] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
-    if (!userLoading && !user) {
-      router.push('/auth')
-    }
+    if (!userLoading && !user) router.push('/auth')
   }, [user, userLoading, router])
 
   useEffect(() => {
-    if (user) {
-      loadSynthesis()
-    }
+    if (!user) return
+    loadSynthesis()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const loadSynthesis = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('syntheses')
       .select(`
         *,
         dialogues (
           topic,
-          dialogue_participants (
-            user_id,
-            users (
-              id,
-              name,
-              political_lean
-            )
-          )
+          dialogue_participants ( user_id, users ( name, political_lean ) )
         ),
-        verifications (
-          user_id,
-          decision,
-          created_at
-        )
+        verifications ( user_id, decision, created_at )
       `)
       .eq('id', synthesisId)
       .single()
 
-    if (data) {
-      setSynthesis(data)
-    }
+    if (error) console.error('Load synthesis error:', error)
+    if (data) setSynthesis(data)
     setLoading(false)
   }
 
-  const handleVerify = async (decision) => {
-    setSubmitting(true)
-
+  const vote = async (decision) => {
     const { error } = await supabase
       .from('verifications')
-      .insert([{
+      .insert({
         synthesis_id: synthesisId,
-        user_id: user?.id,
+        user_id: user.id,
         decision
-      }])
+      })
 
     if (error) {
+      console.error('Vote error:', error)
       alert(error.message)
-      setSubmitting(false)
       return
     }
 
-    // Reload to show updated status
-    await loadSynthesis()
-    setSubmitting(false)
+    loadSynthesis()
   }
 
   if (userLoading || loading) {
@@ -95,18 +76,30 @@ export default function SynthesisVerificationPage() {
 
   if (!user || !profile || !synthesis) return null
 
-  const participants = synthesis.dialogues?.dialogue_participants?.map(p => p.users) || []
+  const participants = synthesis.dialogues?.dialogue_participants || []
   const verifications = synthesis.verifications || []
-  const totalParticipants = participants.length
-  const totalVerified = verifications.length
-  const userVerification = verifications.find(v => v.user_id === user.id)
-  const isParticipant = participants.some(p => p.id === user.id)
+  const isParticipant = participants.some(p => p.user_id === user.id)
+  const userVote = verifications.find(v => v.user_id === user.id)
+
+  const votes = {
+    endorse: verifications.filter(v => v.decision === 'endorse').length,
+    refine: verifications.filter(v => v.decision === 'refine').length,
+    reject: verifications.filter(v => v.decision === 'reject').length
+  }
+  const total = votes.endorse + votes.refine + votes.reject
+  const endorsePct = total > 0 ? Math.round((votes.endorse / total) * 100) : 0
+
+  // Parse synthesis content
+  const synthesisText = synthesis.synthesis?.policyRecommendation || synthesis.synthesis || 'No synthesis content available.'
 
   return (
     <div className="min-h-screen bg-slate-950">
       <nav className="border-b border-slate-800 p-4">
         <button
-          onClick={() => router.push('/verification')}
+          onClick={() => {
+            router.push('/verification')
+            router.refresh()
+          }}
           className="text-sm text-slate-400 hover:text-slate-300"
         >
           ← Back to Verification
@@ -114,144 +107,156 @@ export default function SynthesisVerificationPage() {
       </nav>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Header */}
         <div className="mb-6 animate-fadeUp">
-          <Tag color="blue">Synthesis Review</Tag>
-          <h2 className="font-display text-3xl font-bold mt-4 mb-2">
-            {synthesis.dialogues?.topic || synthesis.topic}
-          </h2>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            {isParticipant && !userVote && <Tag color="amber">Needs Your Review</Tag>}
+            {synthesis.approved && <Tag color="green">✓ Approved</Tag>}
+            {userVote && (
+              <Tag color={
+                userVote.decision === 'endorse' ? 'green' :
+                userVote.decision === 'refine' ? 'amber' : 'red'
+              }>
+                You {userVote.decision === 'endorse' ? 'Endorsed' :
+                     userVote.decision === 'refine' ? 'Flagged' : 'Rejected'}
+              </Tag>
+            )}
+          </div>
+          <h1 className="font-display text-4xl font-bold mb-2">
+            {synthesis.dialogues?.topic || synthesis.topic || 'Untitled Synthesis'}
+          </h1>
           <p className="text-slate-400">
-            {totalVerified}/{totalParticipants} participants verified
+            Generated {new Date(synthesis.created_at).toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric'
+            })}
           </p>
         </div>
 
-        {/* Policy Recommendation */}
-        <Card className="mb-6 border-amber-400/20 bg-amber-400/5 animate-fadeUp" style={{ animationDelay: '100ms' }}>
-          <div className="text-xs text-amber-400 font-mono uppercase tracking-wider mb-3">
-            Policy Recommendation
+        {/* Vote Stats */}
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <Card className="text-center">
+            <div className={`text-3xl font-display font-bold mb-2 ${
+              endorsePct >= 70 ? 'text-green-400' :
+              endorsePct >= 40 ? 'text-amber-400' : 'text-red-400'
+            }`}>
+              {endorsePct}%
+            </div>
+            <div className="text-xs text-slate-400">Endorsed</div>
+          </Card>
+          <Card className="text-center">
+            <div className="text-3xl font-display font-bold text-green-400 mb-2">
+              {votes.endorse}
+            </div>
+            <div className="text-xs text-slate-400">Endorsements</div>
+          </Card>
+          <Card className="text-center">
+            <div className="text-3xl font-display font-bold text-amber-400 mb-2">
+              {votes.refine}
+            </div>
+            <div className="text-xs text-slate-400">Need Refinement</div>
+          </Card>
+          <Card className="text-center">
+            <div className="text-3xl font-display font-bold text-red-400 mb-2">
+              {votes.reject}
+            </div>
+            <div className="text-xs text-slate-400">Rejections</div>
+          </Card>
+        </div>
+
+        {/* Vote Progress Bar */}
+        {total > 0 && (
+          <div className="mb-8">
+            <div className="h-2 bg-slate-800 rounded-full overflow-hidden flex gap-1 mb-3">
+              <div
+                className="bg-green-400 transition-all"
+                style={{ width: `${(votes.endorse / total) * 100}%` }}
+              />
+              <div
+                className="bg-amber-400 transition-all"
+                style={{ width: `${(votes.refine / total) * 100}%` }}
+              />
+              <div
+                className="bg-red-400 transition-all"
+                style={{ width: `${(votes.reject / total) * 100}%` }}
+              />
+            </div>
+            <div className="flex gap-6 text-sm">
+              <span className="text-green-400">✓ {votes.endorse} endorsed</span>
+              <span className="text-amber-400">~ {votes.refine} needs refinement</span>
+              <span className="text-red-400">✗ {votes.reject} rejected</span>
+            </div>
           </div>
-          <p className="text-slate-100 leading-relaxed text-base">
-            {synthesis.synthesis?.policyRecommendation}
-          </p>
+        )}
+
+        {/* Voting Buttons */}
+        {isParticipant && !userVote && (
+          <div className="flex gap-3 mb-8">
+            <button
+              onClick={() => vote('endorse')}
+              className="px-6 py-3 rounded-lg bg-green-400/10 border border-green-400/30 text-green-400 hover:bg-green-400/20 transition-colors font-semibold"
+            >
+              ✓ Endorse This Synthesis
+            </button>
+            <button
+              onClick={() => vote('refine')}
+              className="px-6 py-3 rounded-lg bg-amber-400/10 border border-amber-400/30 text-amber-400 hover:bg-amber-400/20 transition-colors font-semibold"
+            >
+              ~ Needs Refinement
+            </button>
+            <button
+              onClick={() => vote('reject')}
+              className="px-6 py-3 rounded-lg bg-red-400/10 border border-red-400/30 text-red-400 hover:bg-red-400/20 transition-colors font-semibold"
+            >
+              ✗ Reject
+            </button>
+          </div>
+        )}
+
+        {/* Synthesis Content */}
+        <Card className="mb-8">
+          <div className="mb-4 pb-4 border-b border-slate-800">
+            <div className="text-xs text-amber-400 font-mono uppercase tracking-wider">
+              AI-Generated Policy Synthesis
+            </div>
+            <div className="text-xs text-slate-500 mt-1">
+              {new Date(synthesis.created_at).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
+          </div>
+
+          <div className="prose prose-invert max-w-none">
+            <div className="text-slate-300 leading-relaxed whitespace-pre-wrap">
+              {synthesisText}
+            </div>
+          </div>
         </Card>
 
-        {/* Key Agreements & Implementation */}
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <Card className="animate-fadeUp" style={{ animationDelay: '200ms' }}>
-            <div className="text-xs text-green-400 font-mono uppercase tracking-wider mb-3">
-              Key Agreements
-            </div>
-            <div className="space-y-2">
-              {synthesis.synthesis?.keyAgreements?.map((agreement, i) => (
-                <div key={i} className="flex gap-2 text-sm text-slate-300">
-                  <span className="text-green-400 mt-0.5">✓</span>
-                  {agreement}
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="animate-fadeUp" style={{ animationDelay: '250ms' }}>
-            <div className="text-xs text-blue-400 font-mono uppercase tracking-wider mb-3">
-              Implementation Steps
-            </div>
-            <div className="space-y-2">
-              {synthesis.synthesis?.implementationSteps?.map((step, i) => (
-                <div key={i} className="flex gap-2 text-sm text-slate-300">
-                  <span className="text-blue-400">{i + 1}.</span>
-                  {step}
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        {/* Participant Contributions */}
-        <Card className="mb-6 animate-fadeUp" style={{ animationDelay: '300ms' }}>
+        {/* Participants */}
+        <Card>
           <div className="text-xs text-amber-400 font-mono uppercase tracking-wider mb-4">
-            How Each Voice Was Heard
+            Dialogue Participants
           </div>
-          <div className="space-y-4">
-            {synthesis.synthesis?.participantContributions?.map((contrib, i) => (
-              <div key={i} className="pb-4 border-b border-slate-800 last:border-0 last:pb-0">
-                <div className="font-semibold text-slate-200 mb-1">{contrib.name}</div>
-                <div className="text-sm text-slate-400 mb-1">
-                  <span className="text-slate-500">Contribution:</span> {contrib.contribution}
+          <div className="flex flex-wrap gap-2">
+            {participants.map(p => p.users && (
+              <div key={p.user_id} className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg">
+                <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                  {p.users.name?.[0] || '?'}
                 </div>
-                <div className="text-sm text-slate-400">
-                  <span className="text-slate-500">Addressed:</span> {contrib.concernsAddressed}
-                </div>
+                <span className="text-sm text-slate-300">{p.users.name}</span>
+                {p.users.political_lean && (
+                  <span className="text-xs text-slate-500">({p.users.political_lean})</span>
+                )}
               </div>
             ))}
           </div>
         </Card>
-
-        {/* Verification Status */}
-        <Card className="mb-6 animate-fadeUp" style={{ animationDelay: '350ms' }}>
-          <div className="text-xs text-slate-400 font-mono uppercase tracking-wider mb-3">
-            Verification Status
-          </div>
-          <div className="space-y-2">
-            {participants.map(p => {
-              const verification = verifications.find(v => v.user_id === p.id)
-              return (
-                <div key={p.id} className="flex justify-between items-center p-3 bg-slate-800 rounded">
-                  <span className="text-sm text-slate-300">{p.name}</span>
-                  {verification ? (
-                    <Tag color={verification.decision === 'approve' ? 'green' : 'red'}>
-                      {verification.decision === 'approve' ? '✓ Approved' : '✗ Rejected'}
-                    </Tag>
-                  ) : (
-                    <span className="text-xs text-slate-500">Pending...</span>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </Card>
-
-        {/* Actions */}
-        {isParticipant && !userVerification && (
-          <div className="flex gap-4 animate-fadeUp" style={{ animationDelay: '400ms' }}>
-            <Button
-              onClick={() => handleVerify('approve')}
-              loading={submitting}
-              className="flex-1 bg-green-400 hover:bg-green-300"
-            >
-              ✓ Approve Synthesis
-            </Button>
-            <Button
-              onClick={() => handleVerify('reject')}
-              loading={submitting}
-              variant="secondary"
-              className="flex-1 border-red-400/30 text-red-400 hover:bg-red-400/10"
-            >
-              ✗ Request Revision
-            </Button>
-          </div>
-        )}
-
-        {userVerification && (
-          <Card className={`
-            text-center animate-fadeUp
-            ${userVerification.decision === 'approve' ? 'bg-green-400/10 border-green-400/30' : 'bg-red-400/10 border-red-400/30'}
-          `}>
-            <p className={`font-semibold ${userVerification.decision === 'approve' ? 'text-green-400' : 'text-red-400'}`}>
-              You {userVerification.decision === 'approve' ? 'approved' : 'rejected'} this synthesis
-            </p>
-          </Card>
-        )}
-
-        {synthesis.approved && (
-          <Card className="text-center bg-green-400/10 border-green-400/30 mt-6 animate-fadeUp">
-            <div className="text-4xl mb-3">✓</div>
-            <h3 className="font-display text-xl font-bold text-green-400 mb-2">
-              Consensus Reached
-            </h3>
-            <p className="text-slate-300 text-sm">
-              All participants have approved this synthesis. Ready for implementation.
-            </p>
-          </Card>
-        )}
       </div>
     </div>
   )
