@@ -185,7 +185,7 @@ export default function VerificationPage() {
             <ol className="text-sm text-slate-400 text-left max-w-md mx-auto space-y-2">
               <li>1. Join or create a dialogue</li>
               <li>2. Exchange at least 4 messages with other participants</li>
-              <li>3. Click "Generate Synthesis" button</li>
+              <li>3. Click &quot;Generate Synthesis&quot; button</li>
               <li>4. Return here to review and verify</li>
             </ol>
             <button
@@ -230,16 +230,7 @@ export default function VerificationPage() {
                     ${needsReview ? 'border-amber-400/20 bg-amber-400/5' : ''}
                   `}
                   style={{ animationDelay: `${i * 50}ms` }}
-                  // onClick={() => {
-                  //   console.log('🖱️ CLICK FIRED')
-                  //   console.log('Synthesis ID:', synthesis.id)
-                  //   console.log('Navigating to:', `/verification/${synthesis.id}`)
-                    
-                  //   router.push(`/verification/${synthesis.id}`)
-                  //   router.refresh()
-                    
-                  //   console.log('✅ Navigation called')
-                  // }}
+                  
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
