@@ -230,7 +230,7 @@ export default function DialogueRoomPage() {
           >
             ← Dialogues
           </button>
-          
+
           {/* Header - Stack on mobile */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
             <div className="min-w-0 flex-1">
@@ -242,7 +242,7 @@ export default function DialogueRoomPage() {
                 {aiThinking && <span className="hidden sm:inline ml-2 text-amber-400">· AI thinking...</span>}
               </p>
             </div>
-            
+
             {/* Actions - Mobile optimized */}
             <div className="flex gap-2 flex-wrap">
               {/* Mobile sidebar toggle */}
@@ -252,14 +252,14 @@ export default function DialogueRoomPage() {
               >
                 {showSidebar ? 'Hide Info' : 'Show Info'}
               </button>
-              
+
               <Tag color={dialogue.status === 'active' ? 'green' : 'blue'}>
                 {dialogue.status}
               </Tag>
-              
+
               {humanCount >= 4 && (
-                <Button 
-                  onClick={handleGenerateSynthesis} 
+                <Button
+                  onClick={handleGenerateSynthesis}
                   loading={generating}
                   className="text-xs sm:text-sm px-3 sm:px-4 py-1.5"
                 >
@@ -289,25 +289,26 @@ export default function DialogueRoomPage() {
               return (
                 <div key={msg.id} className={`flex gap-2 sm:gap-3 ${isMe && !isAI ? 'flex-row-reverse' : ''}`}>
                   {/* Avatar - Smaller on mobile */}
-                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                    isAI ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400'
-                    : isMe ? 'bg-blue-400/10 border border-blue-400/30 text-blue-400'
-                    : 'bg-green-400/10 border border-green-400/30 text-green-400'
-                  }`}>
+                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isAI ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400'
+                      : isMe ? 'bg-blue-400/10 border border-blue-400/30 text-blue-400'
+                        : 'bg-green-400/10 border border-green-400/30 text-green-400'
+                    }`}>
                     {isAI ? '⚖' : (msg.user_name?.[0] || '?')}
                   </div>
-                  
+
                   {/* Message bubble */}
                   <div className="flex-1 min-w-0 max-w-[85%] sm:max-w-2xl">
-                    <div className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg ${
-                      isAI ? 'bg-amber-400/5 border border-amber-400/20'
-                      : isMe ? 'bg-blue-400/10 border border-blue-400/20'
-                      : 'bg-slate-800 border border-slate-700'
-                    }`}>
-                      <div className={`text-[10px] sm:text-xs font-mono uppercase mb-1 ${
-                        isAI ? 'text-amber-400' : isMe ? 'text-blue-400' : 'text-green-400'
+                    <div className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg ${isAI ? 'bg-amber-400/5 border border-amber-400/20'
+                        : isMe ? 'bg-blue-400/10 border border-blue-400/20'
+                          : 'bg-slate-800 border border-slate-700'
                       }`}>
-                        {isAI ? '⚖ Facilitator' : msg.user_name}
+                      <div className={`text-[10px] sm:text-xs font-mono uppercase mb-1 ${isAI ? 'text-amber-400' : isMe ? 'text-blue-400' : 'text-green-400'
+                        }`}>
+
+                        {isAI ? '⚖ Facilitator' : <Link href={`/profile/${msg.user_id}`}>
+                          {msg.user_name}
+                        </Link>}
+                        {/* {isAI ? '⚖ Facilitator' : msg.user_name} */}
                         {msg.user_lean && !isAI && (
                           <span className="text-slate-500 ml-1 hidden sm:inline">({msg.user_lean})</span>
                         )}
@@ -333,10 +334,10 @@ export default function DialogueRoomPage() {
                   </div>
                   <div className="flex gap-1">
                     {[0, 150, 300].map(delay => (
-                      <span 
-                        key={delay} 
-                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-400/60 rounded-full animate-bounce" 
-                        style={{ animationDelay: `${delay}ms` }} 
+                      <span
+                        key={delay}
+                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-400/60 rounded-full animate-bounce"
+                        style={{ animationDelay: `${delay}ms` }}
                       />
                     ))}
                   </div>
@@ -351,7 +352,7 @@ export default function DialogueRoomPage() {
             {!isParticipant ? (
               <div className="text-center text-xs sm:text-sm text-slate-400">
                 Viewing only.{' '}
-                <button 
+                <button
                   onClick={() => {
                     router.push('/dialogues')
                     router.refresh()
@@ -372,9 +373,9 @@ export default function DialogueRoomPage() {
                   rows={2}
                   className="flex-1 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-slate-800 border border-slate-700 rounded text-slate-100 placeholder-slate-500 focus:border-amber-400 outline-none resize-none disabled:opacity-50"
                 />
-                <Button 
-                  onClick={sendMessage} 
-                  disabled={!input.trim() || sending || aiThinking} 
+                <Button
+                  onClick={sendMessage}
+                  disabled={!input.trim() || sending || aiThinking}
                   className="self-end px-3 sm:px-4 py-2 sm:py-3"
                 >
                   {sending ? <Spinner size={14} /> : '↑'}
@@ -410,9 +411,8 @@ export default function DialogueRoomPage() {
               </div>
               {participants.map(p => (
                 <div key={p.id} className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                    p.id === user.id ? 'bg-blue-400/20 text-blue-400' : 'bg-slate-800 text-slate-300'
-                  }`}>
+                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold ${p.id === user.id ? 'bg-blue-400/20 text-blue-400' : 'bg-slate-800 text-slate-300'
+                    }`}>
                     {p.name?.[0]}
                   </div>
                   <div className="text-xs sm:text-sm text-slate-300 truncate">
