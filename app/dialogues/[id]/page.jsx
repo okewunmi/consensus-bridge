@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Tag } from '@/components/ui/Tag'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-
+import Link from "next/link"
 const supabase = createClient()
 
 export default function DialogueRoomPage() {

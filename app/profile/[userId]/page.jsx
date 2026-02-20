@@ -1,4 +1,10 @@
 // app/profile/[userId]/page.jsx
+"use client"
+
+import { useEffect, useState } from 'react'
+import { Card } from '@/components/ui/Card'
+import { createClient } from '@/lib/supabase/client'
+const supabase = createClient()
 export default function UserProfilePage({ params }) {
   const userId = params.userId
   const [userData, setUserData] = useState(null)
