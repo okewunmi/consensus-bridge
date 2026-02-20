@@ -53,6 +53,7 @@ export default function AuthPage() {
         }
         await sendWelcomeEmail(data.user.email, formData.name)
         
+        
         router.push('/dashboard')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
