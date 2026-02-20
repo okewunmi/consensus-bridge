@@ -491,7 +491,6 @@ export async function generateMetadata({ params }) {
     },
   }
 }
-
 export default function DialogueRoomPage() {
   const params = useParams()
   const dialogueId = params.id
@@ -508,6 +507,8 @@ export default function DialogueRoomPage() {
   const pollingInterval = useRef(null)
   const router = useRouter()
 
+
+  
   useEffect(() => {
     if (!userLoading && !user) router.push('/auth')
   }, [user, userLoading, router])
