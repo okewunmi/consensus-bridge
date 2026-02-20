@@ -217,6 +217,8 @@ export default function Dashboard() {
             { href: '/dialogues', icon: '⚖', label: 'Dialogues' },
             { href: '/verification', icon: '✦', label: 'Verification' },
             { href: '/dashboard', icon: '⌂', label: 'Dashboard' },
+            { href: '/analytics', icon: '📊', label: 'Analytics' },
+            { href: `/profile/${user.id}`, icon: '👤', label: 'My Profile' },
           ].map((nav, i) => (
             <Link
               key={nav.href}
