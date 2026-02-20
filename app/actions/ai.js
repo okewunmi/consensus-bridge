@@ -1,5 +1,4 @@
 'use server'
-import { sendSynthesisReadyEmail } from '@/lib/email/email'
 
 import { analyzeBeliefs as analyzeBeliefsFn, facilitateDialogue as facilitateDialogueFn, synthesizeConsensus as synthesizeConsensusFn } from '@/lib/ai/groq'
 import { createClient } from '@/lib/supabase/server'

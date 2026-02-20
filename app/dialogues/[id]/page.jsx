@@ -451,7 +451,7 @@ import { Tag } from '@/components/ui/Tag'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import Link from "next/link"
-import { sendNewMessageEmail } from '@/lib/email/email'
+// import { sendNewMessageEmail } from '@/lib/email'
 const supabase = createClient()
 
 export default function DialogueRoomPage() {
@@ -580,29 +580,17 @@ export default function DialogueRoomPage() {
         }, 500)
       }
 
-    // Send notifications to other participants
-    const otherParticipants = participants.filter(p => p.id !== user.id)
-    for (const participant of otherParticipants) {
-      await sendNewMessageEmail(
-        participant.email,
-        profile.name,
-        dialogue.topic,
-        messageText.substring(0, 100),
-        dialogueId
-      )
+      setTimeout(() => triggerAi(), 800)
+    } catch (err) {
+      console.error('Send error:', err)
+      alert('Failed to send: ' + err.message)
+      setInput(messageText)
     }
 
-    setTimeout(() => triggerAi(), 800)
-  } catch (err) {
-    console.error('Send error:', err)
-    alert('Failed to send: ' + err.message)
-    setInput(messageText)
+    setSending(false)
   }
 
-  setSending(false)
-}
-
-const triggerAi = async () => {
+  const triggerAi = async () => {
     setAiThinking(true)
     try {
       const { facilitateDialogue } = await import('@/app/actions/ai')

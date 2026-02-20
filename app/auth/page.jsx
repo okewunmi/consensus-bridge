@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { sendWelcomeEmail } from '@/lib/email/email'
+// import { sendWelcomeEmail } from '@/lib/email/email'
 
 export default function AuthPage() {
   const [mode, setMode] = useState('login')
@@ -51,7 +51,7 @@ export default function AuthPage() {
 
           if (profileError) throw profileError
         }
-        await sendWelcomeEmail(data.user.email, formData.name)
+        // await sendWelcomeEmail(data.user.email, formData.name)
         
         
         router.push('/dashboard')
