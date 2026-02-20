@@ -440,7 +440,7 @@
 //   )
 // }
 
-'use client'
+'use server'
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
