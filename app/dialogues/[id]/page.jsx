@@ -440,7 +440,7 @@
 //   )
 // }
 
-'use server'
+'use client'
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -454,43 +454,6 @@ import Link from "next/link"
 // import { sendNewMessageEmail } from '@/lib/email'
 const supabase = createClient()
 
-export async function generateMetadata({ params }) {
-  const supabase = createClient()
-  
-  const { data: dialogue } = await supabase
-    .from('dialogues')
-    .select('*, dialogue_participants(user_id), messages(id)')
-    .eq('id', params.id)
-    .single()
-
-  if (!dialogue) {
-    return { title: 'Dialogue Not Found' }
-  }
-
-  const domain = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
-  const participantCount = dialogue.dialogue_participants?.length || 0
-  const messageCount = dialogue.messages?.length || 0
-
-  return {
-    title: `${dialogue.topic} | Consensus Bridge`,
-    description: dialogue.description || `Join this dialogue - ${participantCount} participants, ${messageCount} messages`,
-    openGraph: {
-      title: dialogue.topic,
-      description: dialogue.description,
-      url: `${domain}/dialogues/${params.id}`,
-      images: [{
-        url: `${domain}/api/og?title=${encodeURIComponent(dialogue.topic)}&participants=${participantCount}&messages=${messageCount}`,
-        width: 1200,
-        height: 630,
-      }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: dialogue.topic,
-      description: dialogue.description,
-    },
-  }
-}
 export default function DialogueRoomPage() {
   const params = useParams()
   const dialogueId = params.id
@@ -506,7 +469,6 @@ export default function DialogueRoomPage() {
   const messagesEndRef = useRef(null)
   const pollingInterval = useRef(null)
   const router = useRouter()
-
 
   
   useEffect(() => {
