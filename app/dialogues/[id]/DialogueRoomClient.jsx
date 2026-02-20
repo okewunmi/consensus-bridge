@@ -131,7 +131,7 @@ export default function DialogueRoomClient({ params }) {
         const participants = dialogue.dialogue_participants?.map(p => p.users).filter(Boolean) || []
         const otherParticipants = participants.filter(p => p.id !== user.id)
         
-        import('@/lib/email').then(({ sendNewMessageEmail }) => {
+        import('@/lib/email/email').then(({ sendNewMessageEmail }) => {
           for (const participant of otherParticipants) {
             if (participant.email) {
               sendNewMessageEmail(
