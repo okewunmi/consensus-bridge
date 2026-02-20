@@ -194,7 +194,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-
+import { sendWelcomeEmail } from '@/lib/email/email'
 export default function AuthPage() {
   const [mode, setMode] = useState('login')
   const [loading, setLoading] = useState(false)
@@ -243,7 +243,7 @@ export default function AuthPage() {
           // SEND WELCOME EMAIL
           // ================================================================
           // Import email function dynamically to avoid bundling if not used
-          import('@/lib/email').then(({ sendWelcomeEmail }) => {
+          import('@/lib/email/email').then(({ sendWelcomeEmail }) => {
             sendWelcomeEmail(data.user.email, formData.name)
               .catch(err => console.error('Welcome email error:', err))
           }).catch(() => {
