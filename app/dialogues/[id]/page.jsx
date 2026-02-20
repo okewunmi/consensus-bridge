@@ -9,6 +9,7 @@
 // import { Button } from '@/components/ui/Button'
 // import { Spinner } from '@/components/ui/Spinner'
 // import Link from "next/link"
+// // import { sendNewMessageEmail } from '@/lib/email'
 // const supabase = createClient()
 
 // export default function DialogueRoomPage() {
@@ -27,6 +28,7 @@
 //   const pollingInterval = useRef(null)
 //   const router = useRouter()
 
+  
 //   useEffect(() => {
 //     if (!userLoading && !user) router.push('/auth')
 //   }, [user, userLoading, router])
@@ -203,6 +205,32 @@
 //     setGenerating(false)
 //   }
 
+//   // Share dialogue function
+//   const shareDialogue = async () => {
+//     const shareUrl = `${window.location.origin}/dialogues/${dialogueId}`
+//     const shareText = `Join me in discussing "${dialogue.topic}" on Consensus Bridge`
+
+//     try {
+//       if (navigator.share) {
+//         // Mobile share sheet
+//         await navigator.share({
+//           title: dialogue.topic,
+//           text: shareText,
+//           url: shareUrl
+//         })
+//       } else {
+//         // Copy to clipboard (desktop)
+//         await navigator.clipboard.writeText(shareUrl)
+//         alert('Link copied to clipboard!')
+//       }
+//     } catch (err) {
+//       // User cancelled or error
+//       if (err.name !== 'AbortError') {
+//         console.error('Share failed:', err)
+//       }
+//     }
+//   }
+
 //   if (userLoading || !dialogue) {
 //     return (
 //       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -245,6 +273,16 @@
 
 //             {/* Actions - Mobile optimized */}
 //             <div className="flex gap-2 flex-wrap">
+//               {/* Share button - Mobile & Desktop */}
+//               <button
+//                 onClick={shareDialogue}
+//                 className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded hover:border-amber-400/50 transition-colors flex items-center gap-1.5"
+//                 title="Share dialogue"
+//               >
+//                 <span className="text-sm">📤</span>
+//                 <span className="hidden sm:inline">Share</span>
+//               </button>
+
 //               {/* Mobile sidebar toggle */}
 //               <button
 //                 onClick={() => setShowSidebar(!showSidebar)}
@@ -289,26 +327,32 @@
 //               return (
 //                 <div key={msg.id} className={`flex gap-2 sm:gap-3 ${isMe && !isAI ? 'flex-row-reverse' : ''}`}>
 //                   {/* Avatar - Smaller on mobile */}
-//                   <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isAI ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400'
+//                   <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+//                     isAI ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400'
 //                       : isMe ? 'bg-blue-400/10 border border-blue-400/30 text-blue-400'
 //                         : 'bg-green-400/10 border border-green-400/30 text-green-400'
-//                     }`}>
+//                   }`}>
 //                     {isAI ? '⚖' : (msg.user_name?.[0] || '?')}
 //                   </div>
 
 //                   {/* Message bubble */}
 //                   <div className="flex-1 min-w-0 max-w-[85%] sm:max-w-2xl">
-//                     <div className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg ${isAI ? 'bg-amber-400/5 border border-amber-400/20'
+//                     <div className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg ${
+//                       isAI ? 'bg-amber-400/5 border border-amber-400/20'
 //                         : isMe ? 'bg-blue-400/10 border border-blue-400/20'
 //                           : 'bg-slate-800 border border-slate-700'
+//                     }`}>
+//                       <div className={`text-[10px] sm:text-xs font-mono uppercase mb-1 ${
+//                         isAI ? 'text-amber-400' : isMe ? 'text-blue-400' : 'text-green-400'
 //                       }`}>
-//                       <div className={`text-[10px] sm:text-xs font-mono uppercase mb-1 ${isAI ? 'text-amber-400' : isMe ? 'text-blue-400' : 'text-green-400'
-//                         }`}>
-
-//                         {isAI ? '⚖ Facilitator' : <Link href={`/profile/${msg.user_id}`}>
-//                           {msg.user_name}
-//                         </Link>}
-//                         {/* {isAI ? '⚖ Facilitator' : msg.user_name} */}
+//                         {isAI ? '⚖ Facilitator' : (
+//                           <Link 
+//                             href={`/profile/${msg.user_id}`}
+//                             className="hover:underline"
+//                           >
+//                             {msg.user_name}
+//                           </Link>
+//                         )}
 //                         {msg.user_lean && !isAI && (
 //                           <span className="text-slate-500 ml-1 hidden sm:inline">({msg.user_lean})</span>
 //                         )}
@@ -410,15 +454,20 @@
 //                 Participants
 //               </div>
 //               {participants.map(p => (
-//                 <div key={p.id} className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-//                   <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold ${p.id === user.id ? 'bg-blue-400/20 text-blue-400' : 'bg-slate-800 text-slate-300'
-//                     }`}>
+//                 <Link
+//                   key={p.id}
+//                   href={`/profile/${p.id}`}
+//                   className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 hover:bg-slate-800/50 p-2 rounded transition-colors"
+//                 >
+//                   <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+//                     p.id === user.id ? 'bg-blue-400/20 text-blue-400' : 'bg-slate-800 text-slate-300'
+//                   }`}>
 //                     {p.name?.[0]}
 //                   </div>
 //                   <div className="text-xs sm:text-sm text-slate-300 truncate">
 //                     {p.name}{p.id === user.id ? ' (you)' : ''}
 //                   </div>
-//                 </div>
+//                 </Link>
 //               ))}
 //             </Card>
 
@@ -440,6 +489,8 @@
 //   )
 // }
 
+
+
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
@@ -451,8 +502,61 @@ import { Tag } from '@/components/ui/Tag'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import Link from "next/link"
-// import { sendNewMessageEmail } from '@/lib/email'
+
 const supabase = createClient()
+
+// ============================================================================
+// METADATA FOR SOCIAL SHARING - Server Component
+// Add this at the TOP of your file (before the component)
+// ============================================================================
+import { createClient as createServerClient } from '@/lib/supabase/server'
+
+export async function generateMetadata({ params }) {
+  const supabase = createServerClient()
+  
+  try {
+    const { data: dialogue } = await supabase
+      .from('dialogues')
+      .select('*, dialogue_participants(user_id), messages(id)')
+      .eq('id', params.id)
+      .single()
+
+    if (!dialogue) {
+      return { title: 'Dialogue Not Found' }
+    }
+
+    const domain = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+    const participantCount = dialogue.dialogue_participants?.length || 0
+    const messageCount = dialogue.messages?.length || 0
+
+    return {
+      title: `${dialogue.topic} | Consensus Bridge`,
+      description: dialogue.description || `Join this dialogue - ${participantCount} participants, ${messageCount} messages`,
+      openGraph: {
+        title: dialogue.topic,
+        description: dialogue.description,
+        url: `${domain}/dialogues/${params.id}`,
+        images: [{
+          url: `${domain}/api/og?title=${encodeURIComponent(dialogue.topic)}&participants=${participantCount}&messages=${messageCount}`,
+          width: 1200,
+          height: 630,
+        }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: dialogue.topic,
+        description: dialogue.description,
+      },
+    }
+  } catch (error) {
+    console.error('Metadata generation error:', error)
+    return { title: 'Consensus Bridge' }
+  }
+}
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
 export default function DialogueRoomPage() {
   const params = useParams()
@@ -470,7 +574,6 @@ export default function DialogueRoomPage() {
   const pollingInterval = useRef(null)
   const router = useRouter()
 
-  
   useEffect(() => {
     if (!userLoading && !user) router.push('/auth')
   }, [user, userLoading, router])
@@ -484,7 +587,7 @@ export default function DialogueRoomPage() {
           *,
           dialogue_participants (
             user_id,
-            users ( id, name, political_lean, belief_profile )
+            users ( id, name, political_lean, belief_profile, email )
           )
         `)
         .eq('id', dialogueId)
@@ -570,6 +673,34 @@ export default function DialogueRoomPage() {
 
       if (error) throw error
 
+      // ====================================================================
+      // EMAIL NOTIFICATIONS - Send to other participants
+      // ====================================================================
+      if (dialogue) {
+        const participants = dialogue.dialogue_participants?.map(p => p.users).filter(Boolean) || []
+        const otherParticipants = participants.filter(p => p.id !== user.id)
+        
+        // Import email function dynamically to avoid bundling if not used
+        import('@/lib/email').then(({ sendNewMessageEmail }) => {
+          for (const participant of otherParticipants) {
+            if (participant.email) {
+              // Don't await - send async in background
+              sendNewMessageEmail(
+                participant.email,
+                profile.name,
+                dialogue.topic,
+                messageText.substring(0, 100),
+                dialogueId
+              ).catch(err => console.error('Email error:', err))
+            }
+          }
+        }).catch(() => {
+          // Email module not available - skip silently
+          console.log('Email notifications not configured')
+        })
+      }
+      // ====================================================================
+
       if (realtimeError) {
         setTimeout(async () => {
           const { data } = await supabase
@@ -647,26 +778,22 @@ export default function DialogueRoomPage() {
     setGenerating(false)
   }
 
-  // Share dialogue function
   const shareDialogue = async () => {
     const shareUrl = `${window.location.origin}/dialogues/${dialogueId}`
     const shareText = `Join me in discussing "${dialogue.topic}" on Consensus Bridge`
 
     try {
       if (navigator.share) {
-        // Mobile share sheet
         await navigator.share({
           title: dialogue.topic,
           text: shareText,
           url: shareUrl
         })
       } else {
-        // Copy to clipboard (desktop)
         await navigator.clipboard.writeText(shareUrl)
         alert('Link copied to clipboard!')
       }
     } catch (err) {
-      // User cancelled or error
       if (err.name !== 'AbortError') {
         console.error('Share failed:', err)
       }
@@ -688,7 +815,6 @@ export default function DialogueRoomPage() {
 
   return (
     <div className="h-screen bg-slate-950 flex flex-col">
-      {/* Navigation - Responsive */}
       <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-lg flex-shrink-0">
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <button
@@ -701,7 +827,6 @@ export default function DialogueRoomPage() {
             ← Dialogues
           </button>
 
-          {/* Header - Stack on mobile */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
             <div className="min-w-0 flex-1">
               <h1 className="font-display text-lg sm:text-xl lg:text-2xl font-bold mb-1 break-words line-clamp-2">
@@ -713,9 +838,7 @@ export default function DialogueRoomPage() {
               </p>
             </div>
 
-            {/* Actions - Mobile optimized */}
             <div className="flex gap-2 flex-wrap">
-              {/* Share button - Mobile & Desktop */}
               <button
                 onClick={shareDialogue}
                 className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded hover:border-amber-400/50 transition-colors flex items-center gap-1.5"
@@ -725,7 +848,6 @@ export default function DialogueRoomPage() {
                 <span className="hidden sm:inline">Share</span>
               </button>
 
-              {/* Mobile sidebar toggle */}
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
                 className="lg:hidden px-3 py-1.5 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded hover:border-slate-600"
@@ -753,9 +875,7 @@ export default function DialogueRoomPage() {
       </nav>
 
       <div className="flex-1 overflow-hidden flex relative">
-        {/* Main chat area */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Messages area - Responsive padding */}
           <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-3 sm:py-6 space-y-3 sm:space-y-4">
             {messages.length === 0 && !aiThinking && (
               <div className="text-center py-8 sm:py-16 text-slate-500 text-sm sm:text-base">
@@ -768,7 +888,6 @@ export default function DialogueRoomPage() {
               const isAI = msg.is_ai
               return (
                 <div key={msg.id} className={`flex gap-2 sm:gap-3 ${isMe && !isAI ? 'flex-row-reverse' : ''}`}>
-                  {/* Avatar - Smaller on mobile */}
                   <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                     isAI ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400'
                       : isMe ? 'bg-blue-400/10 border border-blue-400/30 text-blue-400'
@@ -777,7 +896,6 @@ export default function DialogueRoomPage() {
                     {isAI ? '⚖' : (msg.user_name?.[0] || '?')}
                   </div>
 
-                  {/* Message bubble */}
                   <div className="flex-1 min-w-0 max-w-[85%] sm:max-w-2xl">
                     <div className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg ${
                       isAI ? 'bg-amber-400/5 border border-amber-400/20'
@@ -808,7 +926,6 @@ export default function DialogueRoomPage() {
               )
             })}
 
-            {/* AI thinking indicator */}
             {aiThinking && (
               <div className="flex gap-2 sm:gap-3">
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-400 flex items-center justify-center text-xs font-bold">
@@ -833,7 +950,6 @@ export default function DialogueRoomPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input area - Responsive */}
           <div className="border-t border-slate-800 bg-slate-900 p-2 sm:p-4 flex-shrink-0">
             {!isParticipant ? (
               <div className="text-center text-xs sm:text-sm text-slate-400">
@@ -871,7 +987,6 @@ export default function DialogueRoomPage() {
           </div>
         </div>
 
-        {/* Sidebar - Hidden on mobile unless toggled, always visible on desktop */}
         <div className={`
           ${showSidebar ? 'fixed inset-0 bg-slate-950/80 z-40' : 'hidden'}
           lg:relative lg:block lg:bg-transparent lg:z-auto
@@ -881,7 +996,6 @@ export default function DialogueRoomPage() {
             lg:relative lg:w-72 lg:animate-none
             border-l border-slate-800 bg-slate-900 p-3 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto
           `}>
-            {/* Mobile close button */}
             {showSidebar && (
               <button
                 onClick={() => setShowSidebar(false)}
