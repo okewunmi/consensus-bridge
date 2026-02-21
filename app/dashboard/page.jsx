@@ -253,7 +253,7 @@ import { Card } from '@/components/ui/Card'
 import { Tag } from '@/components/ui/Tag'
 import { Spinner } from '@/components/ui/Spinner'
 import { OnboardingChecklist } from '@/lib/onboarding/page'
-import { Leaderboard } from '@/components/gamification'
+import { Leaderboard } from '@/components/ui/gamification'
 
 const supabase = createClient()
 

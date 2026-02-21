@@ -510,7 +510,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import Link from "next/link"
 import { markFirstMessageSent } from '@/lib/onboarding/page'
 import { ExportTranscriptButton } from '@/lib/pdf-export/page'
-import { checkAndAwardBadges } from '@/components/gamification'
+import { checkAndAwardBadges } from '@/components/ui/gamification'
 
 const supabase = createClient()
 

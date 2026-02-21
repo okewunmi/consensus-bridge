@@ -475,7 +475,7 @@ import { Tag } from '@/components/ui/Tag'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { markFirstDialogueJoined } from '@/lib/onboarding/page'
-import { checkAndAwardBadges } from '@/components/gamification'
+import { checkAndAwardBadges } from '@/components/ui/gamification'
 
 const supabase = createClient()
 
