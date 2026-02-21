@@ -1,3 +1,4 @@
+'use client'
 
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -370,7 +371,7 @@ async function trackExport(type, dialogueId, synthesisId) {
 // 6. EXPORT BUTTON COMPONENTS
 // ============================================================================
 
-'use client'
+
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'

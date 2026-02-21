@@ -277,7 +277,7 @@ import { Card } from '@/components/ui/Card'
 import { Tag } from '@/components/ui/Tag'
 import { Spinner } from '@/components/ui/Spinner'
 import { ExportBeliefProfileButton } from '@/lib/pdf-export/page'
-import { UserBadges, BadgeProgress, StreakTracker } from '@/components/gamification'
+import { UserBadges, BadgeProgress, StreakTracker } from '@/components/ui/gamification'
 
 const supabase = createClient()
 
