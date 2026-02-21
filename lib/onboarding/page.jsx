@@ -149,7 +149,7 @@ const dashboardSteps = [
     content: (
       <div>
         <h2 className="text-xl font-bold mb-2">Welcome to Consensus Bridge! 🌉</h2>
-        <p>Let &#39;s take a quick tour to help you get started building consensus across political divides.</p>
+        <p>Let &#39; s take a quick tour to help you get started building consensus across political divides.</p>
       </div>
     ),
     placement: 'center',
@@ -179,7 +179,7 @@ const dashboardSteps = [
     content: (
       <div>
         <h3 className="font-bold mb-2">Track Your Impact</h3>
-        <p>See your stats and how much consensus you &#39;ve helped build.</p>
+        <p>See your stats and how much consensus you &#39; ve helped build.</p>
       </div>
     ),
     placement: 'bottom',
@@ -188,8 +188,8 @@ const dashboardSteps = [
     target: 'body',
     content: (
       <div>
-        <h2 className="text-xl font-bold mb-2">You're Ready! 🚀</h2>
-        <p>Start by completing your belief mapping, then join your first dialogue. Let &#39;s build consensus together!</p>
+        <h2 className="text-xl font-bold mb-2">Your &#39;e Ready! 🚀</h2>
+        <p>Start by completing your belief mapping, then join your first dialogue. Let &#39; s build consensus together!</p>
       </div>
     ),
     placement: 'center',
@@ -309,7 +309,7 @@ export function OnboardingChecklist() {
         <div className="mt-4 p-4 bg-green-400/10 border border-green-400/30 rounded-lg text-center">
           <div className="text-2xl mb-2">🎉</div>
           <div className="font-bold text-green-400">Congratulations!</div>
-          <div className="text-sm text-slate-400">You &#39;ve completed onboarding!</div>
+          <div className="text-sm text-slate-400">You &#39; ve completed onboarding!</div>
         </div>
       )}
     </div>
