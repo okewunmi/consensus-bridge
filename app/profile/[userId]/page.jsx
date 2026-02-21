@@ -7,7 +7,9 @@ import { useUser } from '@/lib/hooks/useUser'
 import { Card } from '@/components/ui/Card'
 import { Tag } from '@/components/ui/Tag'
 import { Spinner } from '@/components/ui/Spinner'
+import { ExportBeliefProfileButton } from '@/lib/pdf-export/page'
 
+import { UserBadges, BadgeProgress, StreakTracker } from '@/components/gamification'
 const supabase = createClient()
 
 export default function UserProfilePage() {
@@ -253,6 +255,14 @@ export default function UserProfilePage() {
           </Card>
         )}
       </div>
+    
+<UserBadges userId={user.id} />
+<BadgeProgress userId={user.id} />
+<StreakTracker userId={user.id} />
+<ExportBeliefProfileButton 
+  user={user}
+  beliefProfile={user.belief_profile}
+/>
     </div>
   )
 }
