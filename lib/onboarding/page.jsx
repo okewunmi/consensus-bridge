@@ -1,5 +1,6 @@
 
 'use client'
+import Link from 'next/link'
 
 import { createContext, useContext, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -292,12 +293,18 @@ export function OnboardingChecklist() {
             {item.completed ? (
               <div className="text-green-400">✓</div>
             ) : item.href ? (
-              <a
-                href={item.href}
-                className="px-3 py-1 bg-amber-400 text-slate-950 rounded text-xs font-semibold hover:bg-amber-300 transition-colors"
-              >
-                Start →
-              </a>
+              // <a
+              //   href={item.href}
+              //   className="px-3 py-1 bg-amber-400 text-slate-950 rounded text-xs font-semibold hover:bg-amber-300 transition-colors"
+              // >
+              //   Start →
+              // </a>
+              <Link
+  href={item.href}
+  className="px-3 py-1 bg-amber-400 text-slate-950 rounded text-xs font-semibold hover:bg-amber-300 transition-colors"
+>
+  Start →
+</Link>
             ) : (
               <div className="w-5 h-5 rounded-full border-2 border-slate-600" />
             )}
