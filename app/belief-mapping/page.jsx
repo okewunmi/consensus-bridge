@@ -285,6 +285,7 @@ import { Card } from '@/components/ui/Card'
 import { Tag } from '@/components/ui/Tag'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { useOnboarding, markBeliefMappingComplete } from '@/lib/onboarding/page' 
 
 
 const BELIEF_QUESTIONS = [
@@ -354,6 +355,7 @@ export default function BeliefMappingPage() {
   const router = useRouter()
   const supabase = createClient()
 const { reloadProgress } = useOnboarding()
+
   if (userLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -377,26 +379,50 @@ const { reloadProgress } = useOnboarding()
     }
   }
 
-  const analyzeBeliefs = async () => {
-    setAnalyzing(true)
+  // const analyzeBeliefs = async () => {
+  //   setAnalyzing(true)
     
-    const { analyzeBeliefs: analyzeAction } = await import('@/app/actions/ai')
-    const result = await analyzeAction(answers, profile?.political_lean || 'moderate')
+  //   const { analyzeBeliefs: analyzeAction } = await import('@/app/actions/ai')
+  //   const result = await analyzeAction(answers, profile?.political_lean || 'moderate')
     
-    if (!result.success) {
-      alert('Analysis failed: ' + result.error)
-      setAnalyzing(false)
-      return
-    }
+  //   if (!result.success) {
+  //     alert('Analysis failed: ' + result.error)
+  //     setAnalyzing(false)
+  //     return
+  //   }
 
-    await supabase
-      .from('users')
-      .update({ belief_profile: result.data })
-      .eq('id', user.id)
+  //   await supabase
+  //     .from('users')
+  //     .update({ belief_profile: result.data })
+  //     .eq('id', user.id)
 
-    setAnalysis(result.data)
+  //   setAnalysis(result.data)
+  //   setAnalyzing(false)
+  // }
+const analyzeBeliefs = async () => {
+  setAnalyzing(true)
+  
+  const { analyzeBeliefs: analyzeAction } = await import('@/app/actions/ai')
+  const result = await analyzeAction(answers, profile?.political_lean || 'moderate')
+  
+  if (!result.success) {
+    alert('Analysis failed: ' + result.error)
     setAnalyzing(false)
+    return
   }
+
+  await supabase
+    .from('users')
+    .update({ belief_profile: result.data })
+    .eq('id', user.id)
+
+  // ✅ Add these two lines:
+  await markBeliefMappingComplete()
+  await reloadProgress()
+
+  setAnalysis(result.data)
+  setAnalyzing(false)
+}
 
   // Results View - Responsive
   if (analysis) {
