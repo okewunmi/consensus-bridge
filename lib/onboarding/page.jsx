@@ -326,17 +326,84 @@ export function OnboardingChecklist() {
 // 4. PROGRESS TRACKING HELPERS
 // ============================================================================
 
-// Call these functions when users complete actions
-
 export async function markBeliefMappingComplete() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  await supabase
+  const { data } = await supabase
     .from('onboarding_progress')
-    .update({ belief_mapping_completed: true })
+    .select('*')
     .eq('user_id', user.id)
+    .single()
+
+  if (!data) return
+
+  const updates = { belief_mapping_completed: true }
+  if (data.tutorial_completed && data.first_dialogue_joined && data.first_message_sent && data.first_synthesis_verified && !data.completed_at) {
+    updates.completed_at = new Date().toISOString()
+  }
+  await supabase.from('onboarding_progress').update(updates).eq('user_id', user.id)
+}
+
+export async function markFirstDialogueJoined() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const { data } = await supabase
+    .from('onboarding_progress')
+    .select('*')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!data || data.first_dialogue_joined) return
+
+  const updates = { first_dialogue_joined: true }
+  if (data.tutorial_completed && data.belief_mapping_completed && data.first_message_sent && data.first_synthesis_verified && !data.completed_at) {
+    updates.completed_at = new Date().toISOString()
+  }
+  await supabase.from('onboarding_progress').update(updates).eq('user_id', user.id)
+}
+
+export async function markFirstMessageSent() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const { data } = await supabase
+    .from('onboarding_progress')
+    .select('*')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!data || data.first_message_sent) return
+
+  const updates = { first_message_sent: true }
+  if (data.tutorial_completed && data.belief_mapping_completed && data.first_dialogue_joined && data.first_synthesis_verified && !data.completed_at) {
+    updates.completed_at = new Date().toISOString()
+  }
+  await supabase.from('onboarding_progress').update(updates).eq('user_id', user.id)
+}
+
+export async function markFirstSynthesisVerified() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const { data } = await supabase
+    .from('onboarding_progress')
+    .select('*')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!data || data.first_synthesis_verified) return
+
+  const updates = { first_synthesis_verified: true }
+  if (data.tutorial_completed && data.belief_mapping_completed && data.first_dialogue_joined && data.first_message_sent && !data.completed_at) {
+    updates.completed_at = new Date().toISOString()
+  }
+  await supabase.from('onboarding_progress').update(updates).eq('user_id', user.id)
 }
 
 export async function markFirstDialogueJoined() {
