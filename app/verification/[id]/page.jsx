@@ -135,7 +135,7 @@ export default function SynthesisDetailPage() {
           <p className="text-xs sm:text-sm text-slate-400">
             <span className="hidden sm:inline">Generated </span>
             {new Date(synthesis.created_at).toLocaleDateString('en-US', {
-              month: window.innerWidth < 640 ? 'short' : 'long',
+              month: 'short',
               day: 'numeric',
               year: 'numeric'
             })}
