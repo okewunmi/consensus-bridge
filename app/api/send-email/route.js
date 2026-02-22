@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-const FROM_EMAIL = process.env.SMTP_FROM || 'Consensus Bridge <noreply@consensusbridge.com>'
+const FROM_EMAIL = process.env.SMTP_FROM || 'Consensus Bridge <fourfivelabs@gmail.com>'
 
 // Helper functions (NOT exported - only for use in this file)
 async function sendWelcomeEmailInternal(to, name) {
