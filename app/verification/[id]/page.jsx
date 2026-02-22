@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Tag } from '@/components/ui/Tag'
 import { Spinner } from '@/components/ui/Spinner'
 import { ExportSynthesisButton } from '@/lib/pdf-export/page'
-
+import { useOnboarding, markFirstSynthesisVerified } from '@/lib/onboarding/page'
 const supabase = createClient()
 
 export default function SynthesisDetailPage() {
@@ -18,6 +18,7 @@ export default function SynthesisDetailPage() {
   const [synthesis, setSynthesis] = useState(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+const { reloadProgress } = useOnboarding()
 
   useEffect(() => {
     if (!userLoading && !user) router.push('/auth')
@@ -62,7 +63,8 @@ export default function SynthesisDetailPage() {
       alert(error.message)
       return
     }
-
+await markFirstSynthesisVerified()
+  await reloadProgress()
     loadSynthesis()
   }
 
