@@ -406,62 +406,6 @@ export async function markFirstSynthesisVerified() {
   await supabase.from('onboarding_progress').update(updates).eq('user_id', user.id)
 }
 
-export async function markFirstDialogueJoined() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
-
-  const { data } = await supabase
-    .from('onboarding_progress')
-    .select('first_dialogue_joined')
-    .eq('user_id', user.id)
-    .single()
-
-  if (data && !data.first_dialogue_joined) {
-    await supabase
-      .from('onboarding_progress')
-      .update({ first_dialogue_joined: true })
-      .eq('user_id', user.id)
-  }
-}
-
-export async function markFirstMessageSent() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
-
-  const { data } = await supabase
-    .from('onboarding_progress')
-    .select('first_message_sent')
-    .eq('user_id', user.id)
-    .single()
-
-  if (data && !data.first_message_sent) {
-    await supabase
-      .from('onboarding_progress')
-      .update({ first_message_sent: true })
-      .eq('user_id', user.id)
-  }
-}
-
-export async function markFirstSynthesisVerified() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
-
-  const { data } = await supabase
-    .from('onboarding_progress')
-    .select('first_synthesis_verified')
-    .eq('user_id', user.id)
-    .single()
-
-  if (data && !data.first_synthesis_verified) {
-    await supabase
-      .from('onboarding_progress')
-      .update({ first_synthesis_verified: true })
-      .eq('user_id', user.id)
-  }
-}
 
 // ============================================================================
 // 5. TOOLTIPS FOR FIRST-TIME FEATURES
