@@ -363,7 +363,7 @@ export default function Dashboard() {
         </div>
 
         {/* Onboarding Checklist - Shows until completed */}
-        <OnboardingChecklist />
+        {/* <OnboardingChecklist /> */}
 
         {/* Stats - 2 columns on mobile, 3 on desktop */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8 animate-fadeUp">
