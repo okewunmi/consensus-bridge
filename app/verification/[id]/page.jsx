@@ -280,7 +280,7 @@ export default function SynthesisDetailPage() {
       
 <ExportSynthesisButton 
   synthesis={synthesis} 
-  dialogue={dialogue}
+ dialogue={synthesis.dialogues}
   verifications={verifications}
 />
     </div>

@@ -544,7 +544,7 @@ export default function DialogueRoomPage() {
           *,
           dialogue_participants (
             user_id,
-            users ( id, name, political_lean, belief_profile )
+            users ( id, name, political_lean, belief_profile, email )
           )
         `)
         .eq('id', dialogueId)
@@ -609,57 +609,129 @@ export default function DialogueRoomPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, aiThinking])
 
+  // const sendMessage = async () => {
+  //   if (!input.trim() || sending || aiThinking || !user || !profile) return
+
+  //   const messageText = input
+  //   setSending(true)
+  //   setInput('')
+
+  //   try {
+  //     const { error } = await supabase
+  //       .from('messages')
+  //       .insert({
+  //         dialogue_id: dialogueId,
+  //         user_id: user.id,
+  //         user_name: profile.name,
+  //         user_lean: profile.political_lean,
+  //         content: messageText,
+  //         is_ai: false
+  //       })
+
+  //     if (error) throw error
+
+  //     // Track first message sent for onboarding
+  //     await markFirstMessageSent()
+
+
+      
+  //     // Check and award badges
+  //     const newBadges = await checkAndAwardBadges(user.id)
+  //     if (newBadges && newBadges.length > 0) {
+  //       // Could show toast notification here
+  //       console.log('New badges earned:', newBadges)
+  //     }
+
+  //     if (realtimeError) {
+  //       setTimeout(async () => {
+  //         const { data } = await supabase
+  //           .from('messages')
+  //           .select('*')
+  //           .eq('dialogue_id', dialogueId)
+  //           .order('created_at', { ascending: true })
+  //         if (data) setMessages(data)
+  //       }, 500)
+  //     }
+
+  //     setTimeout(() => triggerAi(), 800)
+  //   } catch (err) {
+  //     console.error('Send error:', err)
+  //     alert('Failed to send: ' + err.message)
+  //     setInput(messageText)
+  //   }
+
+  //   setSending(false)
+  // }
+
   const sendMessage = async () => {
-    if (!input.trim() || sending || aiThinking || !user || !profile) return
+  if (!input.trim() || sending || aiThinking || !user || !profile) return
 
-    const messageText = input
-    setSending(true)
-    setInput('')
+  const messageText = input
+  setSending(true)
+  setInput('')
 
+  try {
+    const { error } = await supabase
+      .from('messages')
+      .insert({
+        dialogue_id: dialogueId,
+        user_id: user.id,
+        user_name: profile.name,
+        user_lean: profile.political_lean,
+        content: messageText,
+        is_ai: false
+      })
+
+    if (error) throw error
+
+    // Track first message sent for onboarding
+    await markFirstMessageSent()
+
+    // Notify other participants via email
     try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          dialogue_id: dialogueId,
-          user_id: user.id,
-          user_name: profile.name,
-          user_lean: profile.political_lean,
-          content: messageText,
-          is_ai: false
-        })
-
-      if (error) throw error
-
-      // Track first message sent for onboarding
-      await markFirstMessageSent()
-
-      // Check and award badges
-      const newBadges = await checkAndAwardBadges(user.id)
-      if (newBadges && newBadges.length > 0) {
-        // Could show toast notification here
-        console.log('New badges earned:', newBadges)
+      const { sendNewMessageEmail } = await import('@/lib/email/email')
+      const otherParticipants = participants.filter(p => p.id !== user.id)
+      for (const participant of otherParticipants) {
+        if (participant.email) {
+          sendNewMessageEmail(
+            participant.email,
+            profile.name,
+            dialogue.topic,
+            messageText.slice(0, 100),
+            dialogueId
+          ).catch(err => console.error('Notify email failed:', err))
+        }
       }
-
-      if (realtimeError) {
-        setTimeout(async () => {
-          const { data } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('dialogue_id', dialogueId)
-            .order('created_at', { ascending: true })
-          if (data) setMessages(data)
-        }, 500)
-      }
-
-      setTimeout(() => triggerAi(), 800)
-    } catch (err) {
-      console.error('Send error:', err)
-      alert('Failed to send: ' + err.message)
-      setInput(messageText)
+    } catch (emailErr) {
+      console.error('Email import failed:', emailErr)
     }
 
-    setSending(false)
+    // Check and award badges
+    const newBadges = await checkAndAwardBadges(user.id)
+    if (newBadges && newBadges.length > 0) {
+      console.log('New badges earned:', newBadges)
+    }
+
+    if (realtimeError) {
+      setTimeout(async () => {
+        const { data } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('dialogue_id', dialogueId)
+          .order('created_at', { ascending: true })
+        if (data) setMessages(data)
+      }, 500)
+    }
+
+    setTimeout(() => triggerAi(), 800)
+  } catch (err) {
+    console.error('Send error:', err)
+    alert('Failed to send: ' + err.message)
+    setInput(messageText)
   }
+
+  setSending(false)
+}
 
   const triggerAi = async () => {
     setAiThinking(true)
