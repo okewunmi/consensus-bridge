@@ -140,6 +140,7 @@ export default function DialoguesPage() {
 
       // Track first dialogue joined for onboarding
       await markFirstDialogueJoined()
+      
 
       // Check and award badges
       const newBadges = await checkAndAwardBadges(user.id)

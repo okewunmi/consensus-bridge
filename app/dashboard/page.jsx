@@ -253,7 +253,7 @@ import { Card } from '@/components/ui/Card'
 import { Tag } from '@/components/ui/Tag'
 import { Spinner } from '@/components/ui/Spinner'
 import { OnboardingChecklist } from '@/lib/onboarding/page'
-import { Leaderboard } from '@/components/ui/gamification'
+import { Leaderboard, UserBadges, BadgeProgress, StreakTracker } from '@/components/ui/gamification'
 
 const supabase = createClient()
 
@@ -468,9 +468,24 @@ export default function Dashboard() {
         </div>
 
         {/* Leaderboard - New! */}
-        <div className="mb-6 sm:mb-8 animate-fadeUp" style={{ animationDelay: '300ms' }}>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 animate-fadeUp" style={{ animationDelay: '300ms' }}>
+          <div>
+            <StreakTracker userId={user.id} />
+          </div>
+          <div className="md:col-span-2">
+            <BadgeProgress userId={user.id} />
+          </div>
+        </div>
+
+        <div className="mb-6 sm:mb-8 animate-fadeUp" style={{ animationDelay: '350ms' }}>
+          <UserBadges userId={user.id} />
+        </div>
+
+        <div className="mb-6 sm:mb-8 animate-fadeUp" style={{ animationDelay: '400ms' }}>
           <Leaderboard type="consensus" limit={10} />
         </div>
+
 
         {/* Navigation Cards - 2x2 on mobile, 4 across on desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">

@@ -18,6 +18,9 @@ export function OnboardingProvider({ children }) {
 
   useEffect(() => {
     loadProgress()
+    const handleFocus = () => loadProgress()
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
   const loadProgress = async () => {
@@ -95,7 +98,8 @@ export function OnboardingProvider({ children }) {
         updateProgress, 
         runTour, 
         setRunTour,
-        loading 
+        loading,
+        reloadProgress: loadProgress
       }}
     >
       {children}
@@ -293,12 +297,7 @@ export function OnboardingChecklist() {
             {item.completed ? (
               <div className="text-green-400">✓</div>
             ) : item.href ? (
-              // <a
-              //   href={item.href}
-              //   className="px-3 py-1 bg-amber-400 text-slate-950 rounded text-xs font-semibold hover:bg-amber-300 transition-colors"
-              // >
-              //   Start →
-              // </a>
+             
               <Link
   href={item.href}
   className="px-3 py-1 bg-amber-400 text-slate-950 rounded text-xs font-semibold hover:bg-amber-300 transition-colors"

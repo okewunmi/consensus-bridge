@@ -286,6 +286,7 @@ import { Tag } from '@/components/ui/Tag'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 
+
 const BELIEF_QUESTIONS = [
   {
     id: 'economy',
@@ -352,7 +353,7 @@ export default function BeliefMappingPage() {
   const [analysis, setAnalysis] = useState(null)
   const router = useRouter()
   const supabase = createClient()
-
+const { reloadProgress } = useOnboarding()
   if (userLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">

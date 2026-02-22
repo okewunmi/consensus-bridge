@@ -276,13 +276,15 @@ export default function SynthesisDetailPage() {
             ))}
           </div>
         </Card>
+<div className="mt-6">
+          <ExportSynthesisButton 
+            synthesis={synthesis} 
+            dialogue={synthesis.dialogues}
+            verifications={verifications}
+          />
+        </div>
       </div>
       
-<ExportSynthesisButton 
-  synthesis={synthesis} 
- dialogue={synthesis.dialogues}
-  verifications={verifications}
-/>
     </div>
   )
 }
